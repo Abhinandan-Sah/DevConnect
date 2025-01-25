@@ -36,4 +36,5 @@ app.listen(7777, (req, res)=>{
     console.log("Server is running at port 7777");
     console.log("Server is running at port 7777");
     console.log("Server is running at port 7777");
+    console.log("Server is running at port 7777");
 });
