@@ -4,18 +4,19 @@ const connectDB = require("./config/database");
 const User = require("./models/user")
 
 app.post("/signup", async (req, res)=>{
-    const data = req.body
-    const userObject = {
-        firstName: "Avi",
-        lastName: "Sah",
-        emailId: "avi@gmail.com",
-        password: "Avi@123",
-        age: "22",
-        gender: "Male"
-    }
+    const data = req.body;
+    // const userObject = {
+    //     firstName: "Avi",
+    //     lastName: "Sah",
+    //     emailId: "avi@gmail.com",
+    //     password: "Avi@123",
+    //     age: "22",
+    //     gender: "Male"
+    // }
     
     // Creating a new instance of the User model
-    const user = new User(userObject);
+    const user = new User(data);
+    // const user = new User(userObject);
     try{
     await user.save();
     res.send("User Added Successfully!");
@@ -23,6 +24,19 @@ app.post("/signup", async (req, res)=>{
     catch(err){
         res.status(400).send('Error saving the user: '+ err.message);
     }
+});
+
+// Get user by gmail id
+app.get("/user", async (req, res)=>{
+    const userEmail = req.body.email;
+
+    try{
+        await User.findOne({emailId: userEmail});
+    }
+    catch(err){
+        res.status(400).send("Something went wrong")
+    }
+    
 });
 
 connectDB()
