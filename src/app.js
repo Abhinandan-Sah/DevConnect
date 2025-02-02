@@ -59,6 +59,19 @@ app.get("/user", async (req, res)=>{
     }
     
 });
+app.get("/user", async (req, res)=>{
+    const userEmail = req.body.email;
+
+    try{
+        await User.findOne({emailId: userEmail});
+
+        res.send(user);
+    }
+    catch(err){
+        res.status(400).send("Something went wrong")
+    }
+    
+});
 // Get user by gmail id
 app.get("/user", async (req, res)=>{
     const userEmail = req.body.email;
