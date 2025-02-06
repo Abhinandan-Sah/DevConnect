@@ -1,117 +1,91 @@
 const express = require('express');
 const app = express();
-const connectDB = require("./config/database");
-const User = require("./models/user")
+const connectDB = require("./config/database.js");
+const User = require("./models/user");
 
-app.post("/signup", async (req, res)=>{
+app.use(express.json());
+
+app.post("/signup", async (req, res) => {
     const data = req.body;
-    // const userObject = {
-    //     firstName: "Avi",
-    //     lastName: "Sah",
-    //     emailId: "avi@gmail.com",
-    //     password: "Avi@123",
-    //     age: "22",
-    //     gender: "Male"
-    // }
-    
-    // Creating a new instance of the User model
     const user = new User(data);
-    // const user = new User(userObject);
-    try{
-    await user.save();
-    res.send("User Added Successfully!");
-    }
-    catch(err){
-        res.status(400).send('Error saving the user: '+ err.message);
+    try {
+        await user.save();
+        res.send("User Added Successfully!");
+    } catch (err) {
+        res.status(400).send('Error saving the user: ' + err.message);
     }
 });
 
-// Get user by gmail id
-app.get("/user", async (req, res)=>{
-    const userEmail = req.body.email;
-
-    try{
-        const users = await User.findOne({emailId: userEmail});
-            if(users.length === 0){
-                res.status(404).send("User not found");
-            }
-            else{
-                res.send(user);
-            }
-        res.send(user);
+app.get("/user", async (req, res) => {
+    const userEmail = req.query.emailId;
+    try {
+        const user = await User.findOne({ emailId: userEmail });
+        if (!user) {
+            res.status(404).send("User not found");
+        } else {
+            res.send(user);
+        }
+    } catch (err) {
+        res.status(500).send('Error retrieving the user: ' + err.message);
     }
-    catch(err){
-        res.status(400).send("Something went wrong")
-    }
-    
-});
-// Get user by gmail id
-app.get("/user", async (req, res)=>{
-    const userEmail = req.body.email;
-
-    try{
-        await User.findOne({emailId: userEmail});
-
-        res.send(user);
-    }
-    catch(err){
-        res.status(400).send("Something went wrong")
-    }
-    
-});
-app.get("/user", async (req, res)=>{
-    const userEmail = req.body.email;
-
-    try{
-        await User.findOne({emailId: userEmail});
-
-        res.send(user);
-    }
-    catch(err){
-        res.status(400).send("Something went wrong")
-    }
-    
-});
-// Get user by gmail id
-app.get("/user", async (req, res)=>{
-    const userEmail = req.body.email;
-
-    try{
-        await User.findOne({emailId: userEmail});
-
-        res.send(user);
-    }
-    catch(err){
-        res.status(400).send("Something went wrong")
-    }
-    
-});
-// Get user by gmail id
-app.get("/user", async (req, res)=>{
-    const userEmail = req.body.email;
-
-    try{
-        await User.findOne({emailId: userEmail});
-
-        res.send(user);
-    }
-    catch(err){
-        res.status(400).send("Something went wrong")
-    }
-    
 });
 
-connectDB()
-.then(()=>{
+app.get("/feed", async (req, res) => {
+    try {
+        const data = await User.find({});
+        if (data.length === 0) {
+            res.status(404).send("No users found");
+        } else {
+            res.send(data);
+        }
+    } catch (err) {
+        res.status(500).send('Error retrieving users: ' + err.message);
+    }
+});
+
+// DELETE  using delete request
+app.delete("/user", async (req, res)=>{
+    const userId = req.body.userId;
+    // const user = await User.findByIdAndDelete({_id: userId});
+    try{
+        const user = await User.findByIdAndDelete(userId);
+        if(user){
+            res.send("user deleted successfully");
+        }else{
+            res.status(404).send("No users found");
+        }
+    }
+    catch(err){
+        res.status(500).send('Error retrieving users: ' + err.message);
+    }
+});
+
+app.get("/", async (req, res) => {
+    res.send("hello from server");
+});
+
+app.patch("/user", async(req, res)=>{
+    const userId = req.body.userId;
+    const body= req.body;
+
+    try{
+        const user= await User.findByIdAndUpdate({_id: userId}, body);
+        if(user){
+            res.send("user record updated successfully");
+        }else{
+            res.send("user not found");
+        }
+    }catch(err){
+        res.status(500).send('Error retrieving users: ' + err.message)
+    }
+});
+
+connectDB().then(() => {
     console.log("Database connected successfully");
-}).catch((err)=>{
+}).catch((err) => {
     console.log("Database cannot be connected");
 });
 
-app.listen(7777, (req, res)=>{
-    console.log("Server is running at port 7777");
-    console.log("Server is running at port 7777");
-    console.log("Server is running at port 7777");
-    console.log("Server is running at port 7777");
-    console.log("Server is running at port 7777");
+app.listen(5000, () => {
+    console.log("Server is running at port 5000");
 });
