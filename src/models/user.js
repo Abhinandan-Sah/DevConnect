@@ -1,4 +1,6 @@
 const mongoose = require("mongoose");
+const validator= require("validator")
+
 
 const userSchema = new mongoose.Schema(
   {
@@ -17,11 +19,21 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       require: true,
       trim: true,
-      unique: true
+      unique: true,
+      validate(value){
+        if(!validator.isEmail(value)){
+          throw new Error("Invalid Email address "+value);
+        }
+      }
     },
     password: {
       type: String,
       require: true,
+      validator(value){
+        if(!validator.isStrongPassword(value)){
+          throw new Error("Enter a Strong Password: "+ value);
+        }
+      },
     },
     age: {
       type: Number,
@@ -40,6 +52,11 @@ const userSchema = new mongoose.Schema(
     },
     photoURL: {
       type: String,
+      validate(value){
+        if(!validator.isURL(value)){
+          throw new Error ("Invalid photo Url "+ value)
+        }
+      },
       default: "https://hatrabbits.com/wp-content/uploads/2017/01/random.jpg",
     },
     createdAt:{
