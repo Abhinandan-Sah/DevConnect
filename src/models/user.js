@@ -5,6 +5,8 @@ const userSchema = new mongoose.Schema(
     firstName: {
       type: String,
       require: true,
+      minLength: 4,
+      maxLength: 60,
     },
     lastName: {
       type: String,
@@ -15,6 +17,7 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       require: true,
       trim: true,
+      unique: true
     },
     password: {
       type: String,
@@ -32,7 +35,7 @@ const userSchema = new mongoose.Schema(
         }
       },
     },
-    skill: {
+    skills: {
       type: [String],
     },
     photoURL: {
@@ -40,7 +43,7 @@ const userSchema = new mongoose.Schema(
       default: "https://hatrabbits.com/wp-content/uploads/2017/01/random.jpg",
     },
     createdAt:{
-        type:date,
+        type: Date,
     },
   },
   {
