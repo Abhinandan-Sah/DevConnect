@@ -5,8 +5,11 @@ const User = require("./models/user");
 const validator= require("validator")
 const {validateSignUpData, validateLoginData } = require("./utils/validation.js")
 const bcrypt = require("bcrypt")
+const cookieParser= require("cookie-parser")
+const jwt = require("jsonwebtoken")
 
 app.use(express.json());
+app.use(cookieParser());
 
 app.post("/signup", async (req, res) => {
     try {
@@ -47,6 +50,12 @@ app.post("/login", async (req, res) => {
         // Decrypt the password
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if(isPasswordValid){
+            // Generate JWT Token
+            const token = jwt.sign({_id: user._id}, "DEV@CONNECT123");
+
+            // Set the token in cookie
+            res.cookie("token", token);
+
             res.send("Login Successful");
         }else{
             throw new Error("Password is incorrect");
@@ -55,6 +64,33 @@ app.post("/login", async (req, res) => {
     }catch(err){
         res.status(400).send('Error in login: '+ err.message);
     }
+});
+
+app.get("/profile", async(req, res)=>{
+
+    try{
+        const cookie= req.cookies;
+        const {token}= cookie;
+
+        if(!token){
+            throw new Error("Invalid Token");
+        }
+
+        // validated token
+        const decoded = jwt.verify(token, "DEV@CONNECT123")
+        const _id = decoded._id;
+
+        const user = await User.findById(_id);
+
+        if(!user){
+            throw new Error("User not exist");
+        }
+        res.send(user)
+        
+    }catch(err){
+        res.status(400).send("Error : "+err.message);
+    }
+    
 });
 
 app.get("/user", async (req, res) => {
@@ -153,6 +189,5 @@ connectDB().then(() => {
 });
 
 app.listen(5000, () => {
-    console.log("Server is running at port 5000");
     console.log("Server is running at port 5000");
 });
