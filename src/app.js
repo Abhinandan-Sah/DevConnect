@@ -6,7 +6,8 @@ const validator= require("validator")
 const {validateSignUpData, validateLoginData } = require("./utils/validation.js")
 const bcrypt = require("bcrypt")
 const cookieParser= require("cookie-parser")
-const jwt = require("jsonwebtoken")
+const jwt = require("jsonwebtoken");
+const { userAuth } = require('./middlewares/auth.js');
 
 app.use(express.json());
 app.use(cookieParser());
@@ -51,10 +52,10 @@ app.post("/login", async (req, res) => {
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if(isPasswordValid){
             // Generate JWT Token
-            const token = jwt.sign({_id: user._id}, "DEV@CONNECT123");
+            const token = await jwt.sign({_id: user._id}, "DEV@CONNECT123", {expiresIn: "1d"});
 
             // Set the token in cookie
-            res.cookie("token", token);
+            res.cookie("token", token, {expires: new Date(Date.now()+ 8 * 3600000)});
 
             res.send("Login Successful");
         }else{
@@ -66,27 +67,12 @@ app.post("/login", async (req, res) => {
     }
 });
 
-app.get("/profile", async(req, res)=>{
+app.get("/profile", userAuth , async(req, res)=>{
 
     try{
-        const cookie= req.cookies;
-        const {token}= cookie;
-
-        if(!token){
-            throw new Error("Invalid Token");
-        }
-
-        // validated token
-        const decoded = jwt.verify(token, "DEV@CONNECT123")
-        const _id = decoded._id;
-
-        const user = await User.findById(_id);
-
-        if(!user){
-            throw new Error("User not exist");
-        }
+        const user = req.user;
         res.send(user)
-        
+
     }catch(err){
         res.status(400).send("Error : "+err.message);
     }
