@@ -3,81 +3,92 @@ const app = express();
 const connectDB = require("./config/database.js");
 const User = require("./models/user");
 const validator= require("validator")
-const {validateSignUpData, validateLoginData } = require("./utils/validation.js")
+// const {validateSignUpData, validateLoginData } = require("./utils/validation.js")
 const bcrypt = require("bcrypt")
 const cookieParser= require("cookie-parser")
 const jwt = require("jsonwebtoken");
 const { userAuth } = require('./middlewares/auth.js');
+const authRouter= require("./routes/auth.js");
+const profileRouter = require('./routes/profile.js');
+const requestRouter = require('./routes/request.js');
+
 
 app.use(express.json());
 app.use(cookieParser());
 
-app.post("/signup", async (req, res) => {
-    try {
-        // validate the data
-        validateSignUpData(req);
+app.use("/", authRouter);
+app.use("/", profileRouter);
+app.use("/", requestRouter);
 
-        const {firstName, lastName, emailId,password}= req.body;
+// app.post("/signup", async (req, res) => {
+//     try {
+//         // validate the data
+//         validateSignUpData(req);
 
-        // Encrypt the password
-        const passwordHash = await bcrypt.hash(password, 10);
+//         const {firstName, lastName, emailId,password}= req.body;
 
-        // creating a new instance of user model
-        const user = new User({
-            firstName, 
-            lastName, 
-            emailId,
-            password: passwordHash,
-        });
-        await user.save();
-        res.send("User Added Successfully!");
-    } catch (err) {
-        res.status(400).send('Error saving the user: ' + err.message);
-    }
-});
+//         // Encrypt the password
+//         const passwordHash = await bcrypt.hash(password, 10);
 
-app.post("/login", async (req, res) => {
-    try {
-        validateLoginData(req);
+//         // creating a new instance of user model
+//         const user = new User({
+//             firstName, 
+//             lastName, 
+//             emailId,
+//             password: passwordHash,
+//         });
+//         await user.save();
+//         res.send("User Added Successfully!");
+//     } catch (err) {
+//         res.status(400).send('Error saving the user: ' + err.message);
+//     }
+// });
 
-        const {emailId, password} = req.body;
 
-        const user = await User.findOne({emailId: emailId});
 
-        if(!user){
-            throw new Error("Invalid credentials"); // Best practice for security say Invalid credentials
-        }
+// app.post("/login", async (req, res) => {
+//     try {
+//         validateLoginData(req);
 
-        // Decrypt the password
-        const isPasswordValid = await bcrypt.compare(password, user.password);
-        if(isPasswordValid){
-            // Generate JWT Token
-            const token = await jwt.sign({_id: user._id}, "DEV@CONNECT123", {expiresIn: "1d"});
+//         const {emailId, password} = req.body;
 
-            // Set the token in cookie
-            res.cookie("token", token, {expires: new Date(Date.now()+ 8 * 3600000)});
+//         const user = await User.findOne({emailId: emailId});
 
-            res.send("Login Successful");
-        }else{
-            throw new Error("Password is incorrect");
-        }
+//         if(!user){
+//             throw new Error("Invalid credentials"); // Best practice for security say Invalid credentials
+//         }
 
-    }catch(err){
-        res.status(400).send('Error in login: '+ err.message);
-    }
-});
+//         // Decrypt the password
+//         // const isPasswordValid = await bcrypt.compare(password, user.password);
+//         const isPasswordValid = await user.validatePassword(password);
+//         if(isPasswordValid){
+//             // Generate JWT Token
+//             const token = await user.getJWT();
 
-app.get("/profile", userAuth , async(req, res)=>{
+//             // Set the token in cookie
+//             res.cookie("token", token, {expires: new Date(Date.now()+ 8 * 3600000)});
 
-    try{
-        const user = req.user;
-        res.send(user)
+//             res.send("Login Successful");
+//         }else{
+//             throw new Error("Password is incorrect");
+//         }
 
-    }catch(err){
-        res.status(400).send("Error : "+err.message);
-    }
+//     }catch(err){
+//         res.status(400).send('Error in login: '+ err.message);
+//     }
+// });
+
+// app.get("/profile", userAuth , async(req, res)=>{
+
+//     try{
+//         const user = req.user;
+//         res.send(user)
+
+//     }catch(err){
+//         res.status(400).send("Error : "+err.message);
+//     }
     
-});
+// });
 
 app.get("/user", async (req, res) => {
     const userEmail = req.query.emailId;
@@ -175,5 +186,5 @@ connectDB().then(() => {
 });
 
 app.listen(5000, () => {
-    console.log("Server is running at port 5000");
+    console.log("Server is running at port 6002");
 });
