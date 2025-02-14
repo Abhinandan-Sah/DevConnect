@@ -136,44 +136,44 @@ app.delete("/user", async (req, res)=>{
 
 
 
-app.patch("/user/:userId", async(req, res)=>{
-    const userId = req.params?.userId;
-    const data= req.body;
+// app.patch("/user/:userId", async(req, res)=>{
+//     const userId = req.params?.userId;
+//     const data= req.body;
 
-    const ALLOWED_UPDATES= [
-        "photoURL",
-        "gender",
-        "age",
-        "skills",
-    ];
+//     const ALLOWED_UPDATES= [
+//         "photoURL",
+//         "gender",
+//         "age",
+//         "skills",
+//     ];
 
-    try{
-        const isUpdateAllowed = Object.keys(data).every((k)=>
-            ALLOWED_UPDATES.includes(k)
-        )
+//     try{
+//         const isUpdateAllowed = Object.keys(data).every((k)=>
+//             ALLOWED_UPDATES.includes(k)
+//         )
 
-        if(!isUpdateAllowed){
-            throw new Error("update not allowed")
-        }
+//         if(!isUpdateAllowed){
+//             throw new Error("update not allowed")
+//         }
 
-        if(data?.skills.length>10){
-            throw new Error("skills cannot be more than 10");
-        }
+//         if(data?.skills.length>10){
+//             throw new Error("skills cannot be more than 10");
+//         }
 
-        const user= await User.findByIdAndUpdate({_id: userId}, data, {
-            returnDocument: "after",
-            runValidators: true,
-        });
+//         const user= await User.findByIdAndUpdate({_id: userId}, data, {
+//             returnDocument: "after",
+//             runValidators: true,
+//         });
 
-        if(user){
-            res.send("user record updated successfully");
-        }else{
-            res.send("user not found");
-        }
-    }catch(err){
-        res.status(500).send('Error retrieving users: ' + err.message)
-    }
-});
+//         if(user){
+//             res.send("user record updated successfully");
+//         }else{
+//             res.send("user not found");
+//         }
+//     }catch(err){
+//         res.status(500).send('Error retrieving users: ' + err.message)
+//     }
+// });
 
 app.get("/", async (req, res) => {
     res.send("hello from server");
