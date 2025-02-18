@@ -10,8 +10,7 @@
 - PATCH /profile/password
 
 ## connection Request Router
-- POST /request/send/interested/:userId
-- POST /request/send/ignored/:userId
+- POST /request/send/:status/:userId  [Status can be ignored or interested]
 - POST /request/review /accepted/:requestId
 - POST /request/review/rejected/:requestId
 
