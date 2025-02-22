@@ -32,4 +32,8 @@ requestRouter.post("/request/send/:status/:toUserId", userAuth, async(requestRou
     res.send(user.firstName + "sent the connect request!");
 }});
 
+requestRouter.post("/request/review/:status/:requestId", userAuth, async(req, res)=>{
+
+});
+
 module.exports = requestRouter;
