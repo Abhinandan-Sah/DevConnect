@@ -2,7 +2,7 @@ const express = require("express");
 const authRouter= express.Router();
 const {validateSignUpData, validateLoginData } = require("../utils/validation.js")
 const bcrypt = require("bcrypt");
-const User = require("../models/user");
+const userModel = require("../models/user");
 
 
 authRouter.post("/signup", async (req, res) => {
@@ -10,7 +10,7 @@ authRouter.post("/signup", async (req, res) => {
         // validate the data
         validateSignUpData(req);
 
-        const {firstName, lastName, emailId,password}= req.body;
+        const {firstName, lastName, emailId,password, skills, photoURL, about}= req.body;
 
         // Encrypt the password
         const passwordHash = await bcrypt.hash(password, 10);
@@ -21,6 +21,9 @@ authRouter.post("/signup", async (req, res) => {
             lastName, 
             emailId,
             password: passwordHash,
+            skills, 
+            photoURL, 
+            about
         });
         await user.save();
         res.send("User Added Successfully!");
@@ -35,7 +38,7 @@ authRouter.post("/login", async (req, res) => {
 
         const {emailId, password} = req.body;
 
-        const user = await User.findOne({emailId: emailId});
+        const user = await userModel.findOne({emailId: emailId});
 
         if(!user){
             throw new Error("Invalid credentials"); // Best practice for security say Invalid credentials

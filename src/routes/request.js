@@ -6,12 +6,13 @@ const requestRouter = express.Router();
 requestRouter.post(
   "/request/send/:status/:toUserId",
   userAuth,
-  async (requestRouter, res) => {
+  async (req, res) => {
     {
       try {
         const fromUserId = req.user._id;
         const toUserId = req.params.toUserId;
         const status = req.params.status;
+        const user= req.user;
 
         const allowedStatus = ["ignored", "interested"];
         if (!allowedStatus.includes(status)) {
@@ -38,7 +39,7 @@ requestRouter.post(
     }
   }
 );
-
+ 
 requestRouter.post(
   "/request/review/:status/:requestId",
   userAuth,
@@ -68,42 +69,7 @@ requestRouter.post(
 
       const data = await connectionRequest.save();
 
-      res.json({message: "Connection Request Updated Successfully!", data});n 
-    } catch (err) {
-      res.status(400).send("ERROR: " + err.message);
-    }
-  }
-);
-requestRouter.post(
-  "/request/review/:status/:requestId",
-  userAuth,
-  async (req, res) => {
-    try {
-      const loggedInUser = req.user;
-      const { status, requestId } = req.params;
-
-      const allowedStatus = ["accepted", "rejected"];
-      if (!allowedStatus.includes(status)) {
-        return res
-          .status(400)
-          .json({ message: "Invalid status type: " + status });
-      }
-
-      const connectionRequest = await ConnectionRequestModel.findOne({
-        _id: requestId,
-        toUserId: loggedInUser._id,
-        status: "interested",
-      });
-
-      if(!connectionRequest){
-        return res.status(400).json({message: "Invalid Request ID"});
-      }
-
-      connectionRequest.status=status;
-
-      const data = await connectionRequest.save();
-
-      res.json({message: "Connection Request Updated Successfully!", data});n 
+      res.json({message: "Connection Request Updated Successfully!", data});
     } catch (err) {
       res.status(400).send("ERROR: " + err.message);
     }

@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema(
   {
     firstName: {
       type: String,
-      require: true,
+      required: true,
       minLength: 4,
       maxLength: 60,
     },
@@ -18,7 +18,7 @@ const userSchema = new mongoose.Schema(
     emailId: {
       type: String,
       lowercase: true,
-      require: true,
+      required: true,
       trim: true,
       unique: true,
       validate(value){
@@ -29,7 +29,7 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      require: true,
+      required: true,
       validator(value){
         if(!validator.isStrongPassword(value)){
           throw new Error("Enter a Strong Password: "+ value);
@@ -59,6 +59,9 @@ const userSchema = new mongoose.Schema(
         }
       },
       default: "https://hatrabbits.com/wp-content/uploads/2017/01/random.jpg",
+    },
+    about: {
+      type: String, 
     },
     createdAt:{
         type: Date,
