@@ -20,4 +20,15 @@ userRouter.get("/user/request/received", userAuth, async (req, res)=>{
     }
 });
 
+userRouter. get("/user/connections", userAuth, async (req, res) => {
+    try{
+        const loggedInUser = req.user;
+
+        const connectionRequestions = ConnectionRequestModel
+    }
+    catch(err){
+        res.status(400).send({message: err.message});
+    }
+})
+
 module.exports = userRouter;
