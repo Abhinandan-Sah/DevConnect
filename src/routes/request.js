@@ -35,7 +35,6 @@ requestRouter.post(
         res.status(400).send("ERROR: " + err.message);
       }
 
-      res.send(user.firstName + "sent the connect request!");
     }
   }
 );
