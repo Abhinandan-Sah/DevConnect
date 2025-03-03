@@ -81,11 +81,22 @@ userRouter.get("/feed", userAuth, async (req, res) => {
                 {fromUserId: loggedInUser._id},
                 {toUserId: loggedInUser._id},
             ]
-        }).select("fromUserId toUserId").populate("fromUserId", "firstName").populate("toUserId", "firstName");
+        }).select("fromUserId toUserId")
 
-        const hideUserFeed = new Set(); 
+        const hideUsersFromFeed = new Set(); 
+        connectionRequests.forEach(req=>{
+            hideUsersFromFeed.add(req.fromUserId.toString());
+            hideUsersFromFeed.add(req.toUserId.toString());
+        });
 
-        res.send(connectionRequests);
+        const users = await userModel.find({
+            $and: [
+                {_id: {$nin: Array.from(hideUsersFromFeed)} },
+                {_id: {$ne: loggedInUser._id}}]
+        })
+        console.log(users);
+
+        res.send(hideUsersFromFeed);
     }
     catch(err){
         res.status(400).send("ERROR: "+ err.message)
