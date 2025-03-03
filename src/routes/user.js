@@ -26,45 +26,29 @@ userRouter.get("/user/connections", userAuth, async (req, res) => {
     try{
         const loggedInUser = req.user;
 
-        // const connectionRequests = await ConnectionRequestModel.find({
-        //     $or: [
-        //         { toUserId: loggedInUser._id, status: "accepted"},
-        //         { fromUserId: loggedInUser._id, status:"accepted" },
-        //     ]
-        // })
-        // const connectionRequests = await ConnectionRequestModel.find({
-        //     $or: [
-        //         { fromUserId: loggedInUser._id, status:"accepted" },
-        //         { toUserId: loggedInUser._id, status: "accepted"},
-        //     ]
-        // }).populate("fromUserId", USER_SAFE_DATA);
-
-
-        // const getUserConnections = (connectionRequests, loggedInUser) => {
-        //     return connectionRequests
-        //         .map(row => row.fromUserId._id.toString()) // Extract _id as a string
-        //         .filter(userId => userId !== loggedInUser._id.toString()); // Filter matching _id
-        // };
-        
-        // // Example usage:
-        // const data = getUserConnections(connectionRequests, loggedInUser);
-        // res.json({data: data});
-
-
         const connectionRequests = await ConnectionRequestModel.find({
             $or: [
                 { fromUserId: loggedInUser._id, status: "accepted" },
                 { toUserId: loggedInUser._id, status: "accepted" },
             ]
-        }).populate("fromUserId", USER_SAFE_DATA);
-        
+        }).populate("fromUserId", USER_SAFE_DATA)
+        .populate("toUserId", USER_SAFE_DATA); // Populate toUserId
+
         const getUserConnections = (connectionRequests, loggedInUser) => {
-            return connectionRequests.map(row => {
-                // Return the user who is NOT the logged-in user
-                return row.fromUserId._id.toString() === loggedInUser._id.toString()
-                    ? row.toUserId // If `fromUserId` is logged in user, return `toUserId`
-                    : row.fromUserId; // Else, return `fromUserId`
-            });
+            const userSet = new Set(); // To store unique user objects
+            return connectionRequests
+                .map(row => 
+                    row.fromUserId._id.toString() === loggedInUser._id.toString()
+                        ? row.toUserId // If `fromUserId` is logged in user, return `toUserId`
+                        : row.fromUserId // Else, return `fromUserId`
+                )
+                .filter(user => {
+                    if (user && user._id && !userSet.has(user._id.toString())) {
+                        userSet.add(user._id.toString());
+                        return true;
+                    }
+                    return false;
+                }); // Ensure only unique user objects are returned
         };
         
         // Example usage:
@@ -78,8 +62,34 @@ userRouter.get("/user/connections", userAuth, async (req, res) => {
 })
 
 // Feed Api/router
-userRouter.get("/feed", userAuth, (req, res) => {
-    
-})
+userRouter.get("/feed", userAuth, async (req, res) => {
+    try{
+
+        // User should see all theuser cards except
+        // 1. User itself
+        // 2. User's connections
+        // 3. User's pending requests
+        // 4. User's rejected requests
+        // 5. User's blocked users
+        // 6.  ignored people
+
+        const loggedInUser = req.user;
+
+        // Find all connection requests (send + received)
+        const connectionRequests = await ConnectionRequestModel.find({
+            $or: [
+                {fromUserId: loggedInUser._id},
+                {toUserId: loggedInUser._id},
+            ]
+        }).select("fromUserId toUserId").populate("fromUserId", "firstName").populate("toUserId", "firstName");
+
+        const hideUserFeed = new Set(); 
+
+        res.send(connectionRequests);
+    }
+    catch(err){
+        res.status(400).send("ERROR: "+ err.message)
+    }
+});
 
 module.exports = userRouter;
