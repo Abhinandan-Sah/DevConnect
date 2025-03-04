@@ -97,6 +97,7 @@ userRouter.get("/feed", userAuth, async (req, res) => {
         console.log(users);
 
         res.send(hideUsersFromFeed);
+        res.send(hideUsersFromFeed);
     }
     catch(err){
         res.status(400).send("ERROR: "+ err.message)
