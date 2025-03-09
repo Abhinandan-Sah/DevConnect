@@ -12,7 +12,12 @@ const authRouter= require("./routes/auth.js");
 const profileRouter = require('./routes/profile.js');
 const requestRouter = require('./routes/request.js');
 const userRouter = require('./routes/user.js');
+const cors = require("cors") 
 
+app.use(cors({
+    origin: "http://localhost:5173/",
+    credentials: true,
+}))
 app.use(express.json());
 app.use(cookieParser());
 
@@ -188,4 +193,4 @@ connectDB().then(() => {
 
 app.listen(5000, () => {
     console.log("Server is running at port 6002");
-});
+}); 
