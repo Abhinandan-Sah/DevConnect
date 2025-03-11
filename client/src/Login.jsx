@@ -59,37 +59,6 @@ const Login = () => {
             {/* </form> */}
           </div>
         </div>
-
-        <div className="card-body">
-          <h2 className="card-title justify-center">Login</h2>
-          <div className="card-actions justify-center">
-            {/* <form method="POST" action={handleLogin()}> */}
-            <fieldset className="fieldset">
-              <legend className="fieldset-legend">Email</legend>
-              <input
-                type="text"
-                className="input"
-                value={emailId}
-                onChange={(e) => setEmailId(e.target.value)}
-                placeholder="Enter your email"
-              />
-            </fieldset>
-            <fieldset className="fieldset">
-              <legend className="fieldset-legend">Password</legend>
-              <input
-                type="password"
-                className="input"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter password"
-              />
-            </fieldset>
-            <button className="btn bg-primary mt-2" onClick={handleLogin}>
-              Login
-            </button>
-            {/* </form> */}
-          </div>
-        </div>
       </div>
     </div>
   );
