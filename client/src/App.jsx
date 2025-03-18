@@ -19,7 +19,7 @@ function App() {
           <Route path="/" element={<Body />} >
             <Route path='/login' element={<Login />} />
             <Route path='/feed' element={<Feed />} />
-            <Route path='/profile' element={<Profile />} />
+            <Route path='/profile/view' element={<Profile />} />
           </Route>
         </Routes>
       </BrowserRouter>

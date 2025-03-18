@@ -190,6 +190,6 @@ connectDB()
     console.log("Database cannot be connected");
   });
 
-app.listen(5000, () => {
-  console.log("Server is running at port 6002");
+app.listen(5000, (req, res)=>{
+  console.log("Server is running at port 5000");
 });

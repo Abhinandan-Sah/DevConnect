@@ -8,7 +8,7 @@ const userAuth= (async (req, res, next)=>{
     const cookie = req.cookies;
     const {token} = cookie;
 
-    if(!token) throw new Error("Invalid token");
+    if(!token) return res.status(401).send("Invalid token");
 
     //                                 Private key set by developer/myself
     const decodedObj = await jwt.verify(token, "DEV@CONNECT123");
