@@ -6,7 +6,7 @@ const profileRouter= express.Router();
 const bcrypt = require("bcrypt");
 const validator = require("validator");
 
-profileRouter.get("/profile", userAuth , async(req, res)=>{
+profileRouter.get("/profile/view", userAuth , async(req, res)=>{
 
     try{
         const user = req.user;
