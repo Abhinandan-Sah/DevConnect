@@ -1,12 +1,13 @@
 import React from "react";
 
 const UserCard = ({ user }) => {
-  const { firstName, lastName, age, gender, photoURL } = user;
+  const { firstName, lastName, age, gender, photoURL, about } = user;
   return (
     <>
-      <div className="card bg-base-500 w-96 shadow-sm">
+      <div>
+      <div className="card bg-base-200  shadow-sm">
         <figure>
-          <img src={photoURL} alt="photo" className="h-50 w-fit" />
+          {photoURL && <img src={photoURL} alt="photo" className="h-50 w-full" />}
         </figure>
         <div className="card-body">
           <h2 className="card-title ">{firstName + " " + lastName}</h2>
@@ -21,6 +22,7 @@ const UserCard = ({ user }) => {
             <button className="btn bg-primary">Ignore</button>
           </div>
         </div>
+      </div>
       </div>
     </>
   );
