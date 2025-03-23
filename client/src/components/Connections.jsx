@@ -3,6 +3,7 @@ import React, { useEffect } from "react";
 import { BASE_URL } from "../utils/constants";
 import { useDispatch, useSelector } from "react-redux";
 import { addConnections } from "../utils/connectionSlice";
+import UserCard from "./UserCard";
 
 const Connections = () => {
   const dispatch = useDispatch();
@@ -34,8 +35,9 @@ const Connections = () => {
       <div className="text-center">
         <h1 className="font-bold text-2xl">Connections</h1>
         {connections.map((connection) => (
-          <div key={connection?._id}>
-            <p className="text-center text-white">{connection?.firstName}</p>
+          <div key={connection?._id} className="">
+            {/* <p className="text-center text-white">{connection?.firstName}</p> */}
+            <UserCard user={connection} />
           </div>
         ))}
       </div>
