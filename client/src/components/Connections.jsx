@@ -28,18 +28,31 @@ const Connections = () => {
   if (!connections) return;
 
   if (connections.length == 0) return <h1>No Connections Found</h1>;
-  console.log(connections[0]?.firstName);
 
   return (
-    <div className="h-screen w-full flex justify-center ">
+    <div className="h-screen flex w-full justify-center  ">
       <div className="text-center">
-        <h1 className="font-bold text-2xl">Connections</h1>
-        {connections.map((connection) => (
-          <div key={connection?._id} className="">
-            {/* <p className="text-center text-white">{connection?.firstName}</p> */}
-            <UserCard user={connection} />
-          </div>
-        ))}
+        <h1 className="font-bold text-3xl text-white">Connections</h1>
+        {/* <div className="w-full flex gap-2 "> */}
+        {connections.map((connection) => {
+          const { firstName, lastName, photoURL, age, gender, about } =
+            connection;
+          return (
+            <div key={connection?._id} className="m-4 p-4 rounded-lg bg-base-300 flex gap-6">
+                <div>
+                  {photoURL && (
+                    <img src={photoURL} alt="photo" className="w-25 h-25 rounded-full" />
+                  )}
+                </div>
+                <div className="flex flex-col justify-center items-center">
+                  <h2 className="font-bold">{firstName + " " + lastName}</h2>
+                  {age && gender && <p>{age+", "+gender}</p>}
+                  <p className="">{about}</p>
+                </div>
+            </div>
+          );
+        })}
+        {/* </div> */}
       </div>
     </div>
   );

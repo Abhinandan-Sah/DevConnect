@@ -58,7 +58,7 @@ const userSchema = new mongoose.Schema(
           throw new Error ("Invalid photo Url "+ value)
         }
       },
-      default: "https://hatrabbits.com/wp-content/uploads/2017/01/random.jpg",
+      default: "https://t4.ftcdn.net/jpg/02/29/75/83/360_F_229758328_7x8jwCwjtBMmC6rgFzLFhZoEpLobB6L8.jpg",
     },
     about: {
       type: String, 

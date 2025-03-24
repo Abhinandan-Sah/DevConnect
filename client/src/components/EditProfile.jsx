@@ -156,9 +156,22 @@ const EditProfile = ({ user }) => {
             </div>
           </div>
         </div>
-        <UserCard
-          user={{ firstName, lastName, photoURL, age, gender, about }}
-        />
+        <div>
+        <div className="card bg-base-200  shadow-sm">
+        <figure>
+          {photoURL && <img src={photoURL} alt="photo" className="h-50 w-full" />}
+        </figure>
+        <div className="card-body">
+          <h2 className="card-title ">{firstName + " " + lastName}</h2>
+          {age && gender && (
+            <>
+              <h4>{age + ", " + gender}</h4>
+              <h4>{about}</h4>
+            </>
+          )}
+        </div>
+      </div>
+      </div>
         {showToast && (
           <div className="toast toast-top toast-center">
             <div className="alert alert-success">

@@ -36,7 +36,7 @@ const Body = () => {
   return (
     <div className='min-h-screen pb-16'>
       <Navbar />
-      <div className='flex-grow flex '>
+      <div className='w-full flex-grow flex '>
         <Outlet />
       </div>
       <div>

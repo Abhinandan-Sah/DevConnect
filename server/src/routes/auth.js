@@ -25,8 +25,19 @@ authRouter.post("/signup", async (req, res) => {
             photoURL, 
             about
         });
-        await user.save();
-        res.send("User Added Successfully!");
+        const savedUser = await user.save();
+         // Clear existing cookie (important)
+         res.clearCookie("token", {
+            // httpOnly: true,
+            // secure: true,  // Use this in production with HTTPS
+            sameSite: "None"
+        });
+        // Generate JWT Token
+        const token = await user.getJWT();
+
+        // Set the token in cookie
+        res.cookie("token", token, {expires: new Date(Date.now()+ 8 * 3600000)});
+        res.json({message: "User Added Successfully!", data: savedUser});
     } catch (err) {
         res.status(400).send('Error saving the user: ' + err.message);
     }
@@ -47,6 +58,12 @@ authRouter.post("/login", async (req, res) => {
         // const isPasswordValid = await bcrypt.compare(password, user.password);
         const isPasswordValid = await user.validatePassword(password);
         if(isPasswordValid){
+            // Clear existing cookie (important)
+            res.clearCookie("token", {
+                // httpOnly: true,
+                // secure: true,  // Use this in production with HTTPS
+                sameSite: "None"
+            });
             // Generate JWT Token
             const token = await user.getJWT();
 
