@@ -49,11 +49,7 @@ const Feed = () => {
         <div
           key={user?._id || user?.emailId}
           className="absolute transition-all duration-500 ease-in-out"
-          style={{
-            zIndex: feed.length - index,
-            top: index * 5,
-            left: index * 5,
-          }}
+          
         >
           <UserCard user={user} />
         </div>
