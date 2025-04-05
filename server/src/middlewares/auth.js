@@ -10,7 +10,7 @@ const userAuth= (async (req, res, next)=>{
     if(!token) return res.status(401).send("Invalid token");
 
     //                                 Private key set by developer/myself
-    const decodedObj = await jwt.verify(token, "DEV@CONNECT123");
+    const decodedObj = await jwt.verify(token, process.env.JWT_SECRET_KEY);
     const {_id}= decodedObj;
 
     const user = await userModel.findById(_id);
