@@ -3,6 +3,10 @@ const { userAuth } = require("../middlewares/auth");
 const ConnectionRequestModel = require("../models/connectionRequest");
 const requestRouter = express.Router();
 
+const sendEmail = require("../utils/sendEmail");
+const { find, findById } = require("../models/user");
+const userModel = require("../models/user");
+
 requestRouter.post(
   "/request/send/:status/:toUserId",
   userAuth,
@@ -22,6 +26,12 @@ requestRouter.post(
             .json({ message: "Invalid status type: " + status });
         }
 
+        // Check if the target user exists
+      const toUser = await userModel.findById(toUserId);
+      if (!toUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
         const connectionRequest = new ConnectionRequestModel({
           fromUserId,
           toUserId,
@@ -29,6 +39,30 @@ requestRouter.post(
         });
 
         const data = await connectionRequest.save();
+
+        // console.log("hello inside request send route");
+        // const toUser = await findById(toUserId);
+        // console.log(toUser)
+        // console.log(req.user.firstName)
+        // console.log(status);
+        
+
+        // const emailRes = await sendEmail.run("A new friend request from "+ req.user.firstName,req.user.firstName+" is "+ status+ " in toUser");
+        // console.log(emailRes);
+
+
+      // console.log("Connection request saved:", data);
+
+      // Send an email notification
+      const emailSubject = "New Friend Request";
+      const emailBody = `You have received a new friend request from ${req.user.firstName} (${status}) to ${toUser.firstName}.`;
+      const emailRes = await sendEmail.run(
+        emailSubject,
+        emailBody
+      );
+
+      console.log("Email sent successfully:", emailRes);
+
 
         res.json({ message: "Connection Request Sent Successfully!", data });
       } catch (err) {

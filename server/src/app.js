@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const app = express();
 const connectDB = require("./config/database.js");
@@ -13,7 +14,7 @@ const profileRouter = require("./routes/profile.js");
 const requestRouter = require("./routes/request.js");
 const userRouter = require("./routes/user.js");
 const cors = require("cors");
-require("dotenv").config();
+require("./utils/cronjob.js")
 
 const port = process.env.PORT;
 
