@@ -6,6 +6,7 @@ import { BASE_URL } from "../utils/constants"
 import { useDispatch, useSelector } from "react-redux"
 import { addConnections } from "../utils/connectionSlice"
 import { Users, User, Loader2, MessageSquare, ExternalLink } from "lucide-react"
+import { Link } from "react-router-dom"
 
 const Connections = () => {
   const dispatch = useDispatch()
@@ -127,10 +128,10 @@ const Connections = () => {
                   </p>
                 </div>
 
-                <button className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200">
+                <Link to={"/chat/"+_id}><button className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200">
                   <MessageSquare className="h-4 w-4" />
                   Message
-                </button>
+                </button></Link>
               </div>
             </div>
           )
