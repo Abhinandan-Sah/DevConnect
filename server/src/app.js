@@ -17,6 +17,7 @@ const cors = require("cors");
 require("./utils/cronjob.js");
 const http = require("http");
 const initilizeSocket = require("./utils/socket.js");
+const chatRouter = require("./routes/chat.js");
 
 const port = process.env.PORT;
 
@@ -33,6 +34,7 @@ app.use("/", authRouter);
 app.use("/", profileRouter);
 app.use("/", requestRouter);
 app.use("/", userRouter);
+app.use("/", chatRouter);
 
 // app.get("/user", async (req, res) => {
 //   const userEmail = req.query.emailId;
