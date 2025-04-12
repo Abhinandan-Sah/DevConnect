@@ -40,19 +40,6 @@ requestRouter.post(
 
         const data = await connectionRequest.save();
 
-        // console.log("hello inside request send route");
-        // const toUser = await findById(toUserId);
-        // console.log(toUser)
-        // console.log(req.user.firstName)
-        // console.log(status);
-        
-
-        // const emailRes = await sendEmail.run("A new friend request from "+ req.user.firstName,req.user.firstName+" is "+ status+ " in toUser");
-        // console.log(emailRes);
-
-
-      // console.log("Connection request saved:", data);
-
       // Send an email notification
       const emailSubject = "New Friend Request";
       const emailBody = `You have received a new friend request from ${req.user.firstName} (${status}) to ${toUser.firstName}.`;

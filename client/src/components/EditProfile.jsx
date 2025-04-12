@@ -20,7 +20,6 @@ const EditProfile = ({ user }) => {
 
   const dispatch = useDispatch()
 
-  console.log(firstName)
 
   useEffect(() => {
     if (user) {
@@ -60,7 +59,6 @@ const EditProfile = ({ user }) => {
       setIsLoading(false)
     }
   }
-  console.log(firstName)
 
   return (
     <div className="container mx-auto px-4 py-8">
