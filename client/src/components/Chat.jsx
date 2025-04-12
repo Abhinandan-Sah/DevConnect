@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { createSocketConnection } from "../utils/socket";
 import { BASE_URL } from "../utils/constants";
-import axios from "axios"
+import axios from "axios";
 
 const Chat = () => {
   const { targetUserId } = useParams();
@@ -12,17 +12,28 @@ const Chat = () => {
   const [newMessage, setNewMessage] = useState("");
   const userId = user?._id;
 
-  const fetchChatMessages = async(req, res) => {
-    const chat = await axios.get(BASE_URL+"/chat/"+ targetUserId, {
+  const fetchChatMessages = async (req, res) => {
+    const chat = await axios.get(BASE_URL + "/chat/" + targetUserId, {
       withCredentials: true,
     });
 
     console.log(chat.data.messages);
+
+    const chatMessages = chat?.data?.messages.map((msg) => {
+      const { senderId, text } = msg;
+      return {
+        firstName: senderId?.firstName,
+        lastName: senderId?.lastName,
+        text: text,
+      };
+    });
+
+    setMessages(chatMessages);
   };
 
   useEffect(() => {
     fetchChatMessages();
-  }, [])
+  }, []);
 
   useEffect(() => {
     if (!userId) {
@@ -32,13 +43,13 @@ const Chat = () => {
     // As soon as the page loaded, the socket connection is made and joinChat event is emitted
     socket.emit("joinChat", {
       firstName: user?.firstName,
+      lastName: user?.lastName,
       userId,
       targetUserId,
     });
 
-    socket.on("messageReceived", ({ firstName, text }) => {
-      console.log(firstName + " : " + text);
-      setMessages((messages) => [...messages, { firstName, text }]);
+    socket.on("messageReceived", ({ firstName, lastName, text }) => {
+      setMessages((messages) => [...messages, { firstName, lastName, text }]);
     });
 
     // Disconnect the socket  after use/ Don't leave without disconnecting
@@ -51,14 +62,16 @@ const Chat = () => {
     const socket = createSocketConnection();
     socket.emit("sendMessage", {
       firstName: user?.firstName,
+      lastName: user?.lastName,
       userId,
       targetUserId,
       text: newMessage,
     });
+    setNewMessage("");
   };
 
   return (
-    <div className="w-3/4 h-[70vh] mx-auto m-7 border rounded-sm border-gray-600 flex flex-col ">
+    <div className="w-1/2 h-[70vh] mx-auto m-7 border rounded-sm border-gray-600 flex flex-col ">
       <h1 className="p-4 text-2xl font-bold text-center border-b border-gray-600">
         Chat
       </h1>
@@ -67,9 +80,16 @@ const Chat = () => {
         {messages.map((msg, index) => {
           return (
             <div key={index}>
-              <div className="chat chat-start">
+              <div
+                className={
+                  "chat " +
+                  (user?.firstName == msg?.firstName
+                    ? "chat-end"
+                    : "chat-start")
+                }
+              >
                 <div className="chat-header">
-                  {msg?.firstName}
+                  {`${msg?.firstName} ${msg?.lastName}`}
                   <time className="text-xs opacity-50">2 hours ago</time>
                 </div>
                 <div className="chat-bubble">{msg?.text}</div>

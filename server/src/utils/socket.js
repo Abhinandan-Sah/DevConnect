@@ -26,11 +26,10 @@ const initilizeSocket = (server) => {
 
     socket.on(
       "sendMessage",
-      async ({ firstName, userId, targetUserId, text }) => {
+      async ({ firstName, lastName, userId, targetUserId, text }) => {
         // Save message to the database
         try {
           const roomId = getSecretRoomId({ userId, targetUserId });
-          console.log(firstName + " " + text);
           let chat = await Chat.findOne({
             participants: { $all: [userId, targetUserId] },
           });
@@ -48,7 +47,7 @@ const initilizeSocket = (server) => {
           });
 
           await chat.save();
-          io.to(roomId).emit("messageReceived", { firstName, text, timestamp: new Date() });
+          io.to(roomId).emit("messageReceived", { firstName, lastName, text, timestamp: new Date() });
         } catch (err) {
           console.log(err);
         }
