@@ -48,8 +48,6 @@ pipeline {
         GITHUB_CREDENTIALS = credentials('github-creds')
         MONGODB_URI = credentials('mongodb-uri')
         JWT_SECRET = credentials('jwt-secret')
-        AWS_ACCESS = credentials('aws-access-key')
-        AWS_SECRET = credentials('aws-secret-key')
     }
 
     stages {
@@ -69,8 +67,6 @@ pipeline {
                             echo DB_URL=%MONGODB_URI% > .env
                             echo JWT_SECRET_KEY=%JWT_SECRET% >> .env
                             echo PORT=5000 >> .env
-                            echo AWS_ACCESS_KEY=%AWS_ACCESS% >> .env
-                            echo AWS_SECRET_KEY=%AWS_SECRET% >> .env
                         """
                     }
                 }
