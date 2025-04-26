@@ -46,8 +46,8 @@ pipeline {
     environment {
         DOCKER_CREDENTIALS = credentials('dockerhub-creds')
         GITHUB_CREDENTIALS = credentials('github-creds')
-        MONGODB_URI = credentials('mongodb-uri')
-        JWT_SECRET = credentials('jwt-secret')
+        DB_URL = credentials('DB_URL')
+        JWT_SECRET_KEY = credentials('JWT_SECRET_KEY')
     }
 
     stages {
@@ -62,11 +62,10 @@ pipeline {
         stage('Setup Environment') {
             steps {
                 script {
-                    // Create .env file for server
                     dir('server') {
                         powershell '''
-                            Set-Content -Path .env -Value "DB_URL=$env:MONGODB_URI"
-                            Add-Content -Path .env -Value "JWT_SECRET_KEY=$env:JWT_SECRET"
+                            Set-Content -Path .env -Value "DB_URL=$env:DB_URL"
+                            Add-Content -Path .env -Value "JWT_SECRET_KEY=$env:JWT_SECRET_KEY"
                             Add-Content -Path .env -Value "PORT=5000"
                         '''
                     }
@@ -78,7 +77,8 @@ pipeline {
             steps {
                 script {
                     // Docker login
-                    powershell 'echo $env:DOCKER_CREDENTIALS_PSW | docker login -u $env:DOCKER_CREDENTIALS_USR --password-stdin'
+                    powershell 'docker login -u $env:DOCKER_CREDENTIALS_USR -p $env:DOCKER_CREDENTIALS_PSW'
+
                     
                     // Build and push client image
                     dir('client') {
