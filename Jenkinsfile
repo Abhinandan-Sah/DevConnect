@@ -27,35 +27,30 @@ pipeline {
         }
 
         stage('Build and Push Images') {
-    steps {
-        script {
-            // Docker login
-            powershell '''
-                $password = $env:DOCKER_CREDENTIALS_PSW | ConvertTo-SecureString -AsPlainText -Force
-                $credential = New-Object System.Management.Automation.PSCredential($env:DOCKER_CREDENTIALS_USR, $password)
-                $credential.GetNetworkCredential().Password | docker login -u $env:DOCKER_CREDENTIALS_USR --password-stdin
-            '''
-            
-            // Build and push client image
-            dir('client') {
-                bat """
-                    cd %WORKSPACE%\\client
-                    docker build -t %DOCKER_CREDENTIALS_USR%/devconnect:client ./client
-                    docker push %DOCKER_CREDENTIALS_USR%/devconnect:client
-                """
-            }
-            
-            // Build and push server image
-            dir('server') {
-                bat """
-                    cd %WORKSPACE%\\server
-                    docker build -t %DOCKER_CREDENTIALS_USR%/devconnect:server ./server
-                    docker push %DOCKER_CREDENTIALS_USR%/devconnect:server
-                """
+            steps {
+                script {
+                    // Simplified Docker login
+                    bat 'echo %DOCKER_CREDENTIALS_PSW%| docker login -u %DOCKER_CREDENTIALS_USR% --password-stdin'
+                    
+                    // Build and push client image
+                    dir('client') {
+                        bat """
+                            docker build -t %DOCKER_CREDENTIALS_USR%/devconnect:client .
+                            docker push %DOCKER_CREDENTIALS_USR%/devconnect:client
+                        """
+                    }
+                    
+                    // Build and push server image
+                    dir('server') {
+                        bat """
+                            docker build -t %DOCKER_CREDENTIALS_USR%/devconnect:server .
+                            docker push %DOCKER_CREDENTIALS_USR%/devconnect:server
+                        """
+                    }
+                }
             }
         }
-    }
-}
+
         stage('Verify Images') {
             steps {
                 script {
