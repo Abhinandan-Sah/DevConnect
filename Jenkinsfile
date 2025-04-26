@@ -1,132 +1,87 @@
-// pipeline {
-// agent any
+pipeline {
+    agent any
 
-// environment {
-//     GITHUB_TOKEN = credentials('github-token')
-// }
+    environment {
+        DOCKER_CREDENTIALS = credentials('dockerhub-creds')
+        GITHUB_CREDENTIALS = credentials('github-creds')
+        ENV_FILE = credentials('envfile')
+    }
 
-// stages {
-//     stage('Checkout') {
-//         steps {
-//             git url: 'https://github.com/Abhinandan-Sah/DevConnect', credentialsId: 'github-token'
-//         }
-//     }
+    stages {
+        stage('Checkout') {
+            steps {
+                git url: 'https://github.com/Abhinandan-Sah/DevConnect', 
+                    branch: 'main',
+                    credentialsId: 'github-creds'
+            }
+        }
 
-//     stage('Build Docker Image') {
-//         steps {
-//             script {
-//                 sh 'docker build -t DevConnect .'
-//             }
-//         }
-//     }
+        stage('Setup Environment') {
+            steps {
+                script {
+                    dir('server') {
+                        bat 'copy /Y "%ENV_FILE%" .env'
+                    }
+                }
+            }
+        }
 
-//     stage('Run Docker Image') {
-//         steps {
-//             script {
-//                 sh 'docker run -d -p 8085:8080 DevConnect'
-//             }
-//         }
-//     }
-// }
-
-// post {
-//     success {
-//         echo 'Build and deployment succeeded!'
-//     }
-//     failure {
-//         echo 'Build or deployment failed!'
-//     }
-// }
-// }
-
-
-// pipeline {
-//     agent any
-
-//     environment {
-//         DOCKER_CREDENTIALS = credentials('dockerhub-creds')
-//         GITHUB_CREDENTIALS = credentials('github-creds')
-//         DB_URL = credentials('DB_URL')
-//         JWT_SECRET_KEY = credentials('JWT_SECRET_KEY')
-//     }
-
-//     stages {
-//         stage('Checkout') {
-//             steps {
-//                 git url: 'https://github.com/Abhinandan-Sah/DevConnect', 
-//                     branch: 'main',
-//                     credentialsId: 'github-creds'
-//             }
-//         }
-
-//         stage('Setup Environment') {
-//             steps {
-//                 script {
-//                     dir('server') {
-//                         powershell '''
-//                             Set-Content -Path .env -Value "DB_URL=$env:DB_URL"
-//                             Add-Content -Path .env -Value "JWT_SECRET_KEY=$env:JWT_SECRET_KEY"
-//                             Add-Content -Path .env -Value "PORT=5000"
-//                         '''
-//                     }
-//                 }
-//             }
-//         }
-
-//         stage('Build and Push Images') {
-//             steps {
-//                 script {
-//                     // Docker login
-//                     powershell 'docker login -u $env:DOCKER_CREDENTIALS_USR -p $env:DOCKER_CREDENTIALS_PSW'
-
-                    
-//                     // Build and push client image
-//                     dir('client') {
-//                         bat "docker build -t %DOCKER_CREDENTIALS_USR%/devconnect:client ."
-//                         bat "docker push %DOCKER_CREDENTIALS_USR%/devconnect:client"
-//                     }
-                    
-//                     // Build and push server image
-//                     dir('server') {
-//                         bat "docker build -t %DOCKER_CREDENTIALS_USR%/devconnect:server ."
-//                         bat "docker push %DOCKER_CREDENTIALS_USR%/devconnect:server"
-//                     }
-//                 }
-//             }
-//         }
-//     }
-
-//     post {
-//         always {
-//             bat 'docker logout'
-//             cleanWs()
-//         }
-//         success {
-//             echo 'Pipeline succeeded! Images have been built and pushed.'
-//         }
-//         failure {
-//             echo 'Pipeline failed! Check the logs for errors.'
-//         }
-//     }
-// }
-
-environment {
-    DOCKER_CREDENTIALS = credentials('dockerhub-creds')
-    GITHUB_CREDENTIALS = credentials('github-creds')
-    ENVFILE = credentials('envfile')   // Load the whole .env file content
+        stage('Build and Push Images') {
+    steps {
+        script {
+            // Docker login
+            powershell '''
+                $password = $env:DOCKER_CREDENTIALS_PSW | ConvertTo-SecureString -AsPlainText -Force
+                $credential = New-Object System.Management.Automation.PSCredential($env:DOCKER_CREDENTIALS_USR, $password)
+                $credential.GetNetworkCredential().Password | docker login -u $env:DOCKER_CREDENTIALS_USR --password-stdin
+            '''
+            
+            // Build and push client image
+            dir('client') {
+                bat """
+                    cd %WORKSPACE%\\client
+                    docker build -t %DOCKER_CREDENTIALS_USR%/devconnect:client ./client
+                    docker push %DOCKER_CREDENTIALS_USR%/devconnect:client
+                """
+            }
+            
+            // Build and push server image
+            dir('server') {
+                bat """
+                    cd %WORKSPACE%\\server
+                    docker build -t %DOCKER_CREDENTIALS_USR%/devconnect:server ./server
+                    docker push %DOCKER_CREDENTIALS_USR%/devconnect:server
+                """
+            }
+        }
+    }
 }
-
-stages {
-    stage('Setup Environment') {
-        steps {
-            script {
-                dir('server') {
-                    powershell """
-                        echo "$env:ENVFILE" > .env
+        stage('Verify Images') {
+            steps {
+                script {
+                    bat """
+                        docker images | findstr "devconnect"
+                        echo "Verifying images are pushed to Docker Hub..."
+                        docker pull %DOCKER_CREDENTIALS_USR%/devconnect:client
+                        docker pull %DOCKER_CREDENTIALS_USR%/devconnect:server
                     """
                 }
             }
         }
     }
-}
 
+    post {
+        always {
+            script {
+                bat 'docker logout'
+                cleanWs()
+            }
+        }
+        success {
+            echo 'Pipeline succeeded! Images have been built and pushed to Docker Hub.'
+        }
+        failure {
+            echo 'Pipeline failed! Check the logs for errors.'
+        }
+    }
+}
