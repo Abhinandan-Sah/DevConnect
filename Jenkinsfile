@@ -54,6 +54,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 git url: 'https://github.com/Abhinandan-Sah/DevConnect', 
+                    branch: 'main',
                     credentialsId: 'github-creds'
             }
         }
@@ -63,11 +64,11 @@ pipeline {
                 script {
                     // Create .env file for server
                     dir('server') {
-                        bat """
-                            echo DB_URL=%MONGODB_URI% > .env
-                            echo JWT_SECRET_KEY=%JWT_SECRET% >> .env
-                            echo PORT=5000 >> .env
-                        """
+                        powershell '''
+                            Set-Content -Path .env -Value "DB_URL=$env:MONGODB_URI"
+                            Add-Content -Path .env -Value "JWT_SECRET_KEY=$env:JWT_SECRET"
+                            Add-Content -Path .env -Value "PORT=5000"
+                        '''
                     }
                 }
             }
@@ -76,14 +77,16 @@ pipeline {
         stage('Build and Push Images') {
             steps {
                 script {
-                    bat 'echo %DOCKER_CREDENTIALS_PSW% | docker login -u %DOCKER_CREDENTIALS_USR% --password-stdin'
+                    // Docker login
+                    powershell 'echo $env:DOCKER_CREDENTIALS_PSW | docker login -u $env:DOCKER_CREDENTIALS_USR --password-stdin'
                     
-                    // Build and push images
+                    // Build and push client image
                     dir('client') {
                         bat "docker build -t %DOCKER_CREDENTIALS_USR%/devconnect:client ."
                         bat "docker push %DOCKER_CREDENTIALS_USR%/devconnect:client"
                     }
                     
+                    // Build and push server image
                     dir('server') {
                         bat "docker build -t %DOCKER_CREDENTIALS_USR%/devconnect:server ."
                         bat "docker push %DOCKER_CREDENTIALS_USR%/devconnect:server"
@@ -97,6 +100,12 @@ pipeline {
         always {
             bat 'docker logout'
             cleanWs()
+        }
+        success {
+            echo 'Pipeline succeeded! Images have been built and pushed.'
+        }
+        failure {
+            echo 'Pipeline failed! Check the logs for errors.'
         }
     }
 }
