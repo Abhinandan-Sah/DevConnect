@@ -16,6 +16,12 @@ pipeline {
             }
         }
 
+        stage('Verify Docker Access') {
+            steps {
+                sh 'docker ps'
+            }
+        }
+
         stage('Setup Environment') {
             steps {
                 script {
