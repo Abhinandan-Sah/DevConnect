@@ -6,13 +6,13 @@ pipeline {
         DOCKER_CREDENTIALS = credentials('dockerhub-creds')     // DockerHub credentials (username/password)
         GITHUB_CREDENTIALS = credentials('github-creds')        // GitHub credentials (for private repos)
         ENV_FILE = credentials('envfile')                       // .env file as secret text
-        EC2_SSH = credentials('ec2-ssh-creds')                  // SSH private key for EC2 access
 
         REMOTE_USER = 'ubuntu'
         REMOTE_HOST = 'ec2-13-235-86-170.ap-south-1.compute.amazonaws.com'
         GIT_REPO = 'https://github.com/Abhinandan-Sah/DevConnect'
         PROJECT_DIR = 'devconnect-deploy'
-        GIT_BASH = '"C:\\Git\\bin\\bash.exe"'   // Adjust path if needed
+        SSH_KEY_PATH = 'C:/Users/abhin/Downloads/devconnect-secret.pem'
+        GIT_BASH = '"C:\\Git\\bin\\bash.exe"'   // Adjust if Git Bash is installed elsewhere
     }
 
     stages {
@@ -84,11 +84,9 @@ pipeline {
                         docker-compose up -d
                     """
 
-                    sshagent (credentials: ['ec2-ssh-creds']) {
-                        bat """
-                        ${GIT_BASH} -c "ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} '${remoteCommands}'"
-                        """
-                    }
+                    bat """
+                    ${GIT_BASH} -c "chmod 600 '${SSH_KEY_PATH}' && ssh -o StrictHostKeyChecking=no -i '${SSH_KEY_PATH}' ${REMOTE_USER}@${REMOTE_HOST} '${remoteCommands}'"
+                    """
                 }
             }
         }
@@ -96,11 +94,9 @@ pipeline {
         stage('Check Running Containers on EC2') {
             steps {
                 script {
-                    sshagent (credentials: ['ec2-ssh-creds']) {
-                        bat """
-                        ${GIT_BASH} -c "ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} 'docker ps'"
-                        """
-                    }
+                    bat """
+                    ${GIT_BASH} -c "ssh -o StrictHostKeyChecking=no -i '${SSH_KEY_PATH}' ${REMOTE_USER}@${REMOTE_HOST} 'docker ps'"
+                    """
                 }
             }
         }
@@ -119,6 +115,7 @@ pipeline {
         }
     }
 }
+
 
 
 
