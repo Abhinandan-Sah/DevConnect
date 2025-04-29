@@ -1,19 +1,22 @@
-// This is for window docker localhost of jenkins
 pipeline {
     agent any
 
     environment {
-        DOCKER_CREDENTIALS = credentials('dockerhub-creds')
-        GITHUB_CREDENTIALS = credentials('github-creds')
-        ENV_FILE = credentials('envfile')
+        DOCKER_CREDENTIALS = credentials('dockerhub-creds')   // DockerHub credentials
+        GITHUB_CREDENTIALS = credentials('github-creds')      // GitHub credentials
+        ENV_FILE = credentials('envfile')                     // Credentials for .env file
+        EC2_SSH = credentials('ec2-ssh-creds')                // SSH credentials for EC2
+        REMOTE_USER = 'ubuntu'                                // SSH user for Ubuntu EC2
+        REMOTE_HOST = 'ec2-65-0-177-149.ap-south-1.compute.amazonaws.com'  // EC2 Public IP
+        GIT_REPO = 'https://github.com/Abhinandan-Sah/DevConnect'  // GitHub repository URL
+        PROJECT_DIR = 'devconnect-deploy'                     // Directory on EC2 to clone the repo into
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/Abhinandan-Sah/DevConnect', 
-                    branch: 'main',
-                    credentialsId: 'github-creds'
+                // Checkout code from GitHub
+                git url: GIT_REPO, branch: 'main', credentialsId: 'github-creds'
             }
         }
 
@@ -21,65 +24,95 @@ pipeline {
             steps {
                 script {
                     dir('server') {
-                        bat 'copy /Y "%ENV_FILE%" .env'
+                        // Copy .env file in Windows using "bat"
+                        // For Ubuntu EC2, use a Unix-based command like cp instead of bat.
+                        sh 'cp $ENV_FILE .env'
                     }
                 }
             }
         }
 
-        stage('Build and Push Images') {
+        stage('Build and Push Docker Images') {
             steps {
                 script {
-                    // Docker login
-                    bat 'echo %DOCKER_CREDENTIALS_PSW%| docker login -u %DOCKER_CREDENTIALS_USR% --password-stdin'
-                    
-                    // Build & push client
+                    // Docker login to Docker Hub
+                    sh 'echo $DOCKER_CREDENTIALS_PSW | docker login -u $DOCKER_CREDENTIALS_USR --password-stdin'
+
+                    // Build and Push Client Docker Image to Docker Hub
                     dir('client') {
-                        bat """
-                            docker build --no-cache=false --pull=true -t %DOCKER_CREDENTIALS_USR%/devconnect:client .
-                            docker push %DOCKER_CREDENTIALS_USR%/devconnect:client
+                        sh """
+                            docker build --no-cache=false --pull=true -t $DOCKER_CREDENTIALS_USR/devconnect:client .
+                            docker push $DOCKER_CREDENTIALS_USR/devconnect:client
                         """
                     }
-                    
-                    // Build & push server
+
+                    // Build and Push Server Docker Image to Docker Hub
                     dir('server') {
-                        bat """
-                            docker build --no-cache=false --pull=true -t %DOCKER_CREDENTIALS_USR%/devconnect:server .
-                            docker push %DOCKER_CREDENTIALS_USR%/devconnect:server
+                        sh """
+                            docker build --no-cache=false --pull=true -t $DOCKER_CREDENTIALS_USR/devconnect:server .
+                            docker push $DOCKER_CREDENTIALS_USR/devconnect:server
                         """
                     }
                 }
             }
         }
 
-        stage('Verify Images') {
+        stage('Verify Docker Images') {
             steps {
                 script {
-                    bat """
-                        docker images | findstr "devconnect"
+                    sh """
+                        docker images | grep "devconnect"
                         echo "Verifying images are pushed to Docker Hub..."
-                        docker pull %DOCKER_CREDENTIALS_USR%/devconnect:client
-                        docker pull %DOCKER_CREDENTIALS_USR%/devconnect:server
+                        docker pull $DOCKER_CREDENTIALS_USR/devconnect:client
+                        docker pull $DOCKER_CREDENTIALS_USR/devconnect:server
                     """
                 }
             }
         }
 
-        stage('Start Containers') {
+        stage('Deploy to EC2') {
             steps {
                 script {
-                    bat 'docker-compose -f docker-compose.yml up -d'
+                    def remoteCommands = """
+                        # Remove any old deployment directory
+                        rm -rf $PROJECT_DIR
+                        # Clone the latest code
+                        git clone $GIT_REPO $PROJECT_DIR
+                        # Navigate to project directory
+                        cd $PROJECT_DIR
+                        # Stop and remove any old containers
+                        docker-compose down || true
+                        # Pull latest Docker images
+                        docker-compose pull
+                        # Build the Docker images
+                        docker-compose build --no-cache
+                        # Start the containers in detached mode
+                        docker-compose up -d
+                    """
+                    
+                    // SSH into EC2 instance and execute commands
+                    sshagent (credentials: ['ec2-ssh-creds']) {
+                        sh """
+                        ssh -o StrictHostKeyChecking=no $REMOTE_USER@$REMOTE_HOST '
+                        ${remoteCommands}
+                        '
+                        """
+                    }
                 }
             }
         }
 
-        stage('Check Running Containers') {
+        stage('Check Running Containers on EC2') {
             steps {
-                bat '''
-                    echo "Checking container status..."
-                    docker ps | findstr "devconnect"
-                    ping -n 11 127.0.0.1 >nul
-                '''
+                script {
+                    echo "Checking if the containers are running on EC2..."
+                    // Run docker ps to check container status on EC2
+                    sshagent (credentials: ['ec2-ssh-creds']) {
+                        sh """
+                        ssh -o StrictHostKeyChecking=no $REMOTE_USER@$REMOTE_HOST 'docker ps'
+                        """
+                    }
+                }
             }
         }
     }
@@ -87,19 +120,125 @@ pipeline {
     post {
         always {
             script {
-                bat 'docker-compose down'
-                bat 'docker logout'
+                // Cleanup Docker containers if needed
+                sh 'docker-compose down'
+                sh 'docker logout'
                 cleanWs()
             }
         }
         success {
-            echo '✅ Pipeline succeeded! Images pushed and containers started.'
+            echo '✅ Pipeline succeeded! Images have been pushed to Docker Hub and containers deployed on EC2.'
         }
         failure {
             echo '❌ Pipeline failed. Check logs for details.'
         }
     }
 }
+
+
+
+// This is for window docker localhost of jenkins
+// pipeline {
+//     agent any
+
+//     environment {
+//         DOCKER_CREDENTIALS = credentials('dockerhub-creds')
+//         GITHUB_CREDENTIALS = credentials('github-creds')
+//         ENV_FILE = credentials('envfile')
+//     }
+
+//     stages {
+//         stage('Checkout') {
+//             steps {
+//                 git url: 'https://github.com/Abhinandan-Sah/DevConnect', 
+//                     branch: 'main',
+//                     credentialsId: 'github-creds'
+//             }
+//         }
+
+//         stage('Setup Environment') {
+//             steps {
+//                 script {
+//                     dir('server') {
+//                         bat 'copy /Y "%ENV_FILE%" .env'
+//                     }
+//                 }
+//             }
+//         }
+
+//         stage('Build and Push Images') {
+//             steps {
+//                 script {
+//                     // Docker login
+//                     bat 'echo %DOCKER_CREDENTIALS_PSW%| docker login -u %DOCKER_CREDENTIALS_USR% --password-stdin'
+                    
+//                     // Build & push client
+//                     dir('client') {
+//                         bat """
+//                             docker build --no-cache=false --pull=true -t %DOCKER_CREDENTIALS_USR%/devconnect:client .
+//                             docker push %DOCKER_CREDENTIALS_USR%/devconnect:client
+//                         """
+//                     }
+                    
+//                     // Build & push server
+//                     dir('server') {
+//                         bat """
+//                             docker build --no-cache=false --pull=true -t %DOCKER_CREDENTIALS_USR%/devconnect:server .
+//                             docker push %DOCKER_CREDENTIALS_USR%/devconnect:server
+//                         """
+//                     }
+//                 }
+//             }
+//         }
+
+//         stage('Verify Images') {
+//             steps {
+//                 script {
+//                     bat """
+//                         docker images | findstr "devconnect"
+//                         echo "Verifying images are pushed to Docker Hub..."
+//                         docker pull %DOCKER_CREDENTIALS_USR%/devconnect:client
+//                         docker pull %DOCKER_CREDENTIALS_USR%/devconnect:server
+//                     """
+//                 }
+//             }
+//         }
+
+//         stage('Start Containers') {
+//             steps {
+//                 script {
+//                     bat 'docker-compose -f docker-compose.yml up -d'
+//                 }
+//             }
+//         }
+
+//         stage('Check Running Containers') {
+//             steps {
+//                 bat '''
+//                     echo "Checking container status..."
+//                     docker ps | findstr "devconnect"
+//                     ping -n 11 127.0.0.1 >nul
+//                 '''
+//             }
+//         }
+//     }
+
+//     post {
+//         always {
+//             script {
+//                 bat 'docker-compose down'
+//                 bat 'docker logout'
+//                 cleanWs()
+//             }
+//         }
+//         success {
+//             echo '✅ Pipeline succeeded! Images pushed and containers started.'
+//         }
+//         failure {
+//             echo '❌ Pipeline failed. Check logs for details.'
+//         }
+//     }
+// }
 
 // pipeline {
 //     agent any
