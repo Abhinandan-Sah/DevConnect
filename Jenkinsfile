@@ -5,7 +5,7 @@ pipeline {
         DOCKER_CREDENTIALS = credentials('dockerhub-creds')
         GITHUB_CREDENTIALS = credentials('github-creds')
         ENV_FILE = credentials('envfile')
-        EC2_HOST = 'ubuntu@13.235.71.230'
+        EC2_HOST = 'ubuntu@3.110.135.86'
         SSH_KEY = credentials('aws-ssh-key')
     }
 
