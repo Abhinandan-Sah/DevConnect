@@ -84,8 +84,9 @@ pipeline {
                         docker-compose up -d
                     """
 
+                    // Escape inner double quotes with `\"` for Windows bat + Git Bash
                     bat """
-                    ${GIT_BASH} -c "chmod 600 '${SSH_KEY_PATH}' && ssh -o StrictHostKeyChecking=no -i '${SSH_KEY_PATH}' ${REMOTE_USER}@${REMOTE_HOST} '${remoteCommands}'"
+                    ${GIT_BASH} -c "chmod 600 \\"${SSH_KEY_PATH}\\" && ssh -o StrictHostKeyChecking=no -i \\"${SSH_KEY_PATH}\\" ${REMOTE_USER}@${REMOTE_HOST} \\"${remoteCommands.replace('"', '\\"').trim()}\\""
                     """
                 }
             }
