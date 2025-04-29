@@ -33,7 +33,7 @@ pipeline {
                     // Docker login
                     bat 'echo %DOCKER_CREDENTIALS_PSW%| docker login -u %DOCKER_CREDENTIALS_USR% --password-stdin'
                     
-                    // Build and push client image
+                    // Build & push client
                     dir('client') {
                         bat """
                             docker build --no-cache=false --pull=true -t %DOCKER_CREDENTIALS_USR%/devconnect:client .
@@ -41,7 +41,7 @@ pipeline {
                         """
                     }
                     
-                    // Build and push server image
+                    // Build & push server
                     dir('server') {
                         bat """
                             docker build --no-cache=false --pull=true -t %DOCKER_CREDENTIALS_USR%/devconnect:server .
@@ -65,46 +65,21 @@ pipeline {
             }
         }
 
-        stage('Run Containers') {
+        stage('Start Containers') {
             steps {
                 script {
-                    // Create network if it doesn't exist
-                    bat 'docker network create devconnect-network || exit 0'
-
-                    // Stop and remove existing containers if they exist
-                    bat """
-                        docker rm -f devconnect-server 2>nul || exit 0
-                        docker rm -f devconnect-client 2>nul || exit 0
-                    """
-
-                    // Run the server container
-                    dir('server') {
-                        bat """
-                            docker run -d ^
-                                --name devconnect-server ^
-                                --network devconnect-network ^
-                                -p 5000:5000 ^
-                                --env-file .env ^
-                                %DOCKER_CREDENTIALS_USR%/devconnect:server
-                        """
-                    }
-
-                    // Run the client container
-                    bat """
-                        docker run -d ^
-                            --name devconnect-client ^
-                            --network devconnect-network ^
-                            -p 5173:80 ^
-                            %DOCKER_CREDENTIALS_USR%/devconnect:client
-                    """
-
-                    // Verify containers are running
-                    bat """
-                        echo "Checking container status..."
-                        docker ps | findstr "devconnect"
-                        timeout /t 10 /nobreak
-                    """
+                    bat 'docker-compose -f docker-compose.yml up -d'
                 }
+            }
+        }
+
+        stage('Check Running Containers') {
+            steps {
+                bat '''
+                    echo "Checking container status..."
+                    docker ps | findstr "devconnect"
+                    ping -n 11 127.0.0.1 >nul
+                '''
             }
         }
     }
@@ -112,21 +87,16 @@ pipeline {
     post {
         always {
             script {
-                // Clean up containers and network
-                bat """
-                    docker rm -f devconnect-server 2>nul || exit 0
-                    docker rm -f devconnect-client 2>nul || exit 0
-                    docker network rm devconnect-network 2>nul || exit 0
-                    docker logout
-                """
+                bat 'docker-compose down'
+                bat 'docker logout'
                 cleanWs()
             }
         }
         success {
-            echo 'Pipeline succeeded! Containers are running locally.'
+            echo '✅ Pipeline succeeded! Images pushed and containers started.'
         }
         failure {
-            echo 'Pipeline failed! Check the logs for errors.'
+            echo '❌ Pipeline failed. Check logs for details.'
         }
     }
 }
