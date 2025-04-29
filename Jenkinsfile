@@ -5,14 +5,14 @@ pipeline {
         DOCKER_CREDENTIALS = credentials('dockerhub-creds')
         GITHUB_CREDENTIALS = credentials('github-creds')
         ENV_FILE = credentials('envfile')
-        EC2_HOST = 'ubuntu@13.235.71.230'  
+        EC2_HOST = 'ubuntu@3.110.135.86'
         SSH_KEY = credentials('aws-ssh-key')
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/Abhinandan-Sah/DevConnect',
+                git url: 'https://github.com/Abhinandan-Sah/DevConnect', 
                     branch: 'main',
                     credentialsId: 'github-creds'
             }
@@ -20,44 +20,27 @@ pipeline {
 
         stage('Setup Environment') {
             steps {
-                node {
-                    dir('server') {
-                        sh 'cp -f "$ENV_FILE" .env'
-                    }
+                dir('server') {
+                    sh 'cp -f "$ENV_FILE" .env'
                 }
             }
         }
 
         stage('Build and Push Images') {
             steps {
-                node {
-                    sh 'echo "$DOCKER_CREDENTIALS_PSW" | docker login -u "$DOCKER_CREDENTIALS_USR" --password-stdin'
-                    
-                    dir('client') {
-                        sh '''
-                            docker build --no-cache=false --pull=true -t $DOCKER_CREDENTIALS_USR/devconnect:client .
-                            docker push $DOCKER_CREDENTIALS_USR/devconnect:client
-                        '''
-                    }
-                    
-                    dir('server') {
-                        sh '''
-                            docker build --no-cache=false --pull=true -t $DOCKER_CREDENTIALS_USR/devconnect:server .
-                            docker push $DOCKER_CREDENTIALS_USR/devconnect:server
-                        '''
-                    }
-                }
-            }
-        }
+                sh 'echo "$DOCKER_CREDENTIALS_PSW" | docker login -u "$DOCKER_CREDENTIALS_USR" --password-stdin'
 
-        stage('Verify Images') {
-            steps {
-                node {
+                dir('client') {
                     sh '''
-                        docker images | grep "devconnect"
-                        echo "Verifying images are pushed to Docker Hub..."
-                        docker pull $DOCKER_CREDENTIALS_USR/devconnect:client
-                        docker pull $DOCKER_CREDENTIALS_USR/devconnect:server
+                        docker build --no-cache=false --pull=true -t $DOCKER_CREDENTIALS_USR/devconnect:client .
+                        docker push $DOCKER_CREDENTIALS_USR/devconnect:client
+                    '''
+                }
+
+                dir('server') {
+                    sh '''
+                        docker build --no-cache=false --pull=true -t $DOCKER_CREDENTIALS_USR/devconnect:server .
+                        docker push $DOCKER_CREDENTIALS_USR/devconnect:server
                     '''
                 }
             }
@@ -65,26 +48,28 @@ pipeline {
 
         stage('Deploy to AWS') {
             steps {
-                node {
-                    sh '''
-                        scp -i "$SSH_KEY" -o StrictHostKeyChecking=no docker-compose.yaml $EC2_HOST:/home/ubuntu/
-                        scp -i "$SSH_KEY" -o StrictHostKeyChecking=no server/.env $EC2_HOST:/home/ubuntu/server/
-                    '''
+                sh '''
+                    ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no $EC2_HOST "mkdir -p /home/ubuntu/server"
+                    scp -i "$SSH_KEY" -o StrictHostKeyChecking=no docker-compose.yaml $EC2_HOST:/home/ubuntu/
+                    scp -i "$SSH_KEY" -o StrictHostKeyChecking=no server/.env $EC2_HOST:/home/ubuntu/server/
                     
-                    sh '''
-                        ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no $EC2_HOST "cd /home/ubuntu && docker login -u $DOCKER_CREDENTIALS_USR -p $DOCKER_CREDENTIALS_PSW && docker-compose pull && docker-compose down || true && docker-compose up -d && docker logout"
-                    '''
-                }
+                    ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no $EC2_HOST << EOF
+                    cd /home/ubuntu
+                    docker login -u "$DOCKER_CREDENTIALS_USR" -p "$DOCKER_CREDENTIALS_PSW"
+                    docker-compose pull
+                    docker-compose down || true
+                    docker-compose up -d
+                    docker logout
+                    EOF
+                '''
             }
         }
     }
 
     post {
         always {
-            node {
-                sh 'docker logout'
-                cleanWs()
-            }
+            sh 'docker logout'
+            cleanWs()
         }
         success {
             echo 'Pipeline succeeded! Images have been built, pushed, and deployed to AWS.'
@@ -94,6 +79,7 @@ pipeline {
         }
     }
 }
+
 
 
 
