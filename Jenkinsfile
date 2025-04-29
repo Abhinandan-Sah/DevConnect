@@ -1,84 +1,84 @@
-pipeline {
-    agent any
+// pipeline {
+//     agent any
 
-    environment {
-        DOCKER_CREDENTIALS = credentials('dockerhub-creds')
-        GITHUB_CREDENTIALS = credentials('github-creds')
-        ENV_FILE = credentials('envfile')
-        EC2_HOST = 'ubuntu@3.110.135.86'
-        SSH_KEY = credentials('aws-ssh-key')
-    }
+//     environment {
+//         DOCKER_CREDENTIALS = credentials('dockerhub-creds')
+//         GITHUB_CREDENTIALS = credentials('github-creds')
+//         ENV_FILE = credentials('envfile')
+//         EC2_HOST = 'ubuntu@3.110.135.86'
+//         SSH_KEY = credentials('aws-ssh-key')
+//     }
 
-    stages {
-        stage('Checkout') {
-            steps {
-                git url: 'https://github.com/Abhinandan-Sah/DevConnect', 
-                    branch: 'main',
-                    credentialsId: 'github-creds'
-            }
-        }
+//     stages {
+//         stage('Checkout') {
+//             steps {
+//                 git url: 'https://github.com/Abhinandan-Sah/DevConnect', 
+//                     branch: 'main',
+//                     credentialsId: 'github-creds'
+//             }
+//         }
 
-        stage('Setup Environment') {
-            steps {
-                dir('server') {
-                    sh 'cp -f "$ENV_FILE" .env'
-                }
-            }
-        }
+//         stage('Setup Environment') {
+//             steps {
+//                 dir('server') {
+//                     sh 'cp -f "$ENV_FILE" .env'
+//                 }
+//             }
+//         }
 
-        stage('Build and Push Images') {
-            steps {
-                sh 'echo "$DOCKER_CREDENTIALS_PSW" | docker login -u "$DOCKER_CREDENTIALS_USR" --password-stdin'
+//         stage('Build and Push Images') {
+//             steps {
+//                 sh 'echo "$DOCKER_CREDENTIALS_PSW" | docker login -u "$DOCKER_CREDENTIALS_USR" --password-stdin'
 
-                dir('client') {
-                    sh '''
-                        docker build --no-cache=false --pull=true -t $DOCKER_CREDENTIALS_USR/devconnect:client .
-                        docker push $DOCKER_CREDENTIALS_USR/devconnect:client
-                    '''
-                }
+//                 dir('client') {
+//                     sh '''
+//                         docker build --no-cache=false --pull=true -t $DOCKER_CREDENTIALS_USR/devconnect:client .
+//                         docker push $DOCKER_CREDENTIALS_USR/devconnect:client
+//                     '''
+//                 }
 
-                dir('server') {
-                    sh '''
-                        docker build --no-cache=false --pull=true -t $DOCKER_CREDENTIALS_USR/devconnect:server .
-                        docker push $DOCKER_CREDENTIALS_USR/devconnect:server
-                    '''
-                }
-            }
-        }
+//                 dir('server') {
+//                     sh '''
+//                         docker build --no-cache=false --pull=true -t $DOCKER_CREDENTIALS_USR/devconnect:server .
+//                         docker push $DOCKER_CREDENTIALS_USR/devconnect:server
+//                     '''
+//                 }
+//             }
+//         }
 
-        stage('Deploy to AWS') {
-            steps {
-                sh '''
-                    ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no $EC2_HOST "mkdir -p /home/ubuntu/server"
-                    scp -i "$SSH_KEY" -o StrictHostKeyChecking=no docker-compose.yaml $EC2_HOST:/home/ubuntu/
-                    scp -i "$SSH_KEY" -o StrictHostKeyChecking=no server/.env $EC2_HOST:/home/ubuntu/server/
+//         stage('Deploy to AWS') {
+//             steps {
+//                 sh '''
+//                     ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no $EC2_HOST "mkdir -p /home/ubuntu/server"
+//                     scp -i "$SSH_KEY" -o StrictHostKeyChecking=no docker-compose.yaml $EC2_HOST:/home/ubuntu/
+//                     scp -i "$SSH_KEY" -o StrictHostKeyChecking=no server/.env $EC2_HOST:/home/ubuntu/server/
                     
-                    ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no $EC2_HOST << EOF
-                    cd /home/ubuntu
-                    docker login -u "$DOCKER_CREDENTIALS_USR" -p "$DOCKER_CREDENTIALS_PSW"
-                    docker-compose pull
-                    docker-compose down || true
-                    docker-compose up -d
-                    docker logout
-                    EOF
-                '''
-            }
-        }
-    }
+//                     ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no $EC2_HOST << EOF
+//                     cd /home/ubuntu
+//                     docker login -u "$DOCKER_CREDENTIALS_USR" -p "$DOCKER_CREDENTIALS_PSW"
+//                     docker-compose pull
+//                     docker-compose down || true
+//                     docker-compose up -d
+//                     docker logout
+//                     EOF
+//                 '''
+//             }
+//         }
+//     }
 
-    post {
-        always {
-            sh 'docker logout'
-            cleanWs()
-        }
-        success {
-            echo 'Pipeline succeeded! Images have been built, pushed, and deployed to AWS.'
-        }
-        failure {
-            echo 'Pipeline failed! Check the logs for errors.'
-        }
-    }
-}
+//     post {
+//         always {
+//             sh 'docker logout'
+//             cleanWs()
+//         }
+//         success {
+//             echo 'Pipeline succeeded! Images have been built, pushed, and deployed to AWS.'
+//         }
+//         failure {
+//             echo 'Pipeline failed! Check the logs for errors.'
+//         }
+//     }
+// }
 
 
 
@@ -189,88 +189,88 @@ pipeline {
 // }
 
 
-// pipeline {
-//     agent any
+pipeline {
+    agent any
 
-//     environment {
-//         DOCKER_CREDENTIALS = credentials('dockerhub-creds')
-//         GITHUB_CREDENTIALS = credentials('github-creds')
-//         ENV_FILE = credentials('envfile')
-//     }
+    environment {
+        DOCKER_CREDENTIALS = credentials('dockerhub-creds')
+        GITHUB_CREDENTIALS = credentials('github-creds')
+        ENV_FILE = credentials('envfile')
+    }
 
-//     stages {
-//         stage('Checkout') {
-//             steps {
-//                 git url: 'https://github.com/Abhinandan-Sah/DevConnect', 
-//                     branch: 'main',
-//                     credentialsId: 'github-creds'
-//             }
-//         }
+    stages {
+        stage('Checkout') {
+            steps {
+                git url: 'https://github.com/Abhinandan-Sah/DevConnect', 
+                    branch: 'main',
+                    credentialsId: 'github-creds'
+            }
+        }
 
-//         stage('Setup Environment') {
-//             steps {
-//                 script {
-//                     dir('server') {
-//                         bat 'copy /Y "%ENV_FILE%" .env'
-//                     }
-//                 }
-//             }
-//         }
+        stage('Setup Environment') {
+            steps {
+                script {
+                    dir('server') {
+                        bat 'copy /Y "%ENV_FILE%" .env'
+                    }
+                }
+            }
+        }
 
-//         stage('Build and Push Images') {
-//             steps {
-//                 script {
-//                     // Simplified Docker login
-//                     bat 'echo %DOCKER_CREDENTIALS_PSW%| docker login -u %DOCKER_CREDENTIALS_USR% --password-stdin'
+        stage('Build and Push Images') {
+            steps {
+                script {
+                    // Simplified Docker login
+                    bat 'echo %DOCKER_CREDENTIALS_PSW%| docker login -u %DOCKER_CREDENTIALS_USR% --password-stdin'
                     
-//                     // Build and push client image
-//                     dir('client') {
-//                         bat """
-//                             docker build --no-cache=false --pull=true -t %DOCKER_CREDENTIALS_USR%/devconnect:client .
-//                             docker push %DOCKER_CREDENTIALS_USR%/devconnect:client
-//                         """
-//                     }
+                    // Build and push client image
+                    dir('client') {
+                        bat """
+                            docker build --no-cache=false --pull=true -t %DOCKER_CREDENTIALS_USR%/devconnect:client .
+                            docker push %DOCKER_CREDENTIALS_USR%/devconnect:client
+                        """
+                    }
                     
-//                     // Build and push server image
-//                     dir('server') {
-//                         bat """
-//                             docker build --no-cache=false --pull=true -t %DOCKER_CREDENTIALS_USR%/devconnect:server .
-//                             docker push %DOCKER_CREDENTIALS_USR%/devconnect:server
-//                         """
-//                     }
-//                 }
-//             }
-//         }
+                    // Build and push server image
+                    dir('server') {
+                        bat """
+                            docker build --no-cache=false --pull=true -t %DOCKER_CREDENTIALS_USR%/devconnect:server .
+                            docker push %DOCKER_CREDENTIALS_USR%/devconnect:server
+                        """
+                    }
+                }
+            }
+        }
 
-//         stage('Verify Images') {
-//             steps {
-//                 script {
-//                     bat """
-//                         docker images | findstr "devconnect"
-//                         echo "Verifying images are pushed to Docker Hub..."
-//                         docker pull %DOCKER_CREDENTIALS_USR%/devconnect:client
-//                         docker pull %DOCKER_CREDENTIALS_USR%/devconnect:server
-//                     """
-//                 }
-//             }
-//         }
-//     }
+        stage('Verify Images') {
+            steps {
+                script {
+                    bat """
+                        docker images | findstr "devconnect"
+                        echo "Verifying images are pushed to Docker Hub..."
+                        docker pull %DOCKER_CREDENTIALS_USR%/devconnect:client
+                        docker pull %DOCKER_CREDENTIALS_USR%/devconnect:server
+                    """
+                }
+            }
+        }
+    }
 
-//     post {
-//         always {
-//             script {
-//                 bat 'docker logout'
-//                 cleanWs()
-//             }
-//         }
-//         success {
-//             echo 'Pipeline succeeded! Images have been built and pushed to Docker Hub.'
-//         }
-//         failure {
-//             echo 'Pipeline failed! Check the logs for errors.'
-//         }
-//     }
-// }
+    post {
+        always {
+            script {
+                bat 'docker logout'
+                cleanWs()
+            }
+        }
+        success {
+            echo 'Pipeline succeeded! Images have been built and pushed to Docker Hub.'
+        }
+        failure {
+            echo 'Pipeline failed! Check the logs for errors.'
+        }
+    }
+}
 
 // pipeline {
 //     agent any
