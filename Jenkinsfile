@@ -66,18 +66,7 @@ pipeline {
             }
         }
 
-        stage('Deploy to AWS') {
-            steps {
-                script {
-                    sh '''
-                        scp -i "$SSH_KEY" -o StrictHostKeyChecking=no docker-compose.yaml $EC2_HOST:/home/ubuntu/
-                        scp -i "$SSH_KEY" -o StrictHostKeyChecking=no server/.env $EC2_HOST:/home/ubuntu/server/
-                        
-                        ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no $EC2_HOST "cd /home/ubuntu && docker login -u $DOCKER_CREDENTIALS_USR -p $DOCKER_CREDENTIALS_PSW && docker-compose pull && docker-compose down || true && docker-compose up -d && docker logout"
-                    '''
-                }
-            }
-        }
+        
     }
 
     post {
