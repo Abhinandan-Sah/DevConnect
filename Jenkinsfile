@@ -7,7 +7,7 @@ pipeline {
         ENV_FILE = credentials('envfile')                     // Credentials for .env file
         EC2_SSH = credentials('ec2-ssh-creds')                // SSH credentials for EC2
         REMOTE_USER = 'ubuntu'                                // SSH user for Ubuntu EC2
-        REMOTE_HOST = 'ec2-65-0-177-149.ap-south-1.compute.amazonaws.com'  // EC2 Public IP
+        REMOTE_HOST = 'ec2-43-204-107-47.ap-south-1.compute.amazonaws.com'  // EC2 Public IP
         GIT_REPO = 'https://github.com/Abhinandan-Sah/DevConnect'  // GitHub repository URL
         PROJECT_DIR = 'devconnect-deploy'                     // Directory on EC2 to clone the repo into
     }
