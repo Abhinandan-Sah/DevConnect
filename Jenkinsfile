@@ -30,7 +30,7 @@ pipeline {
         stage('Build and Push Images') {
             steps {
                 script {
-                    // Simplified Docker login
+                    // Docker login
                     bat 'echo %DOCKER_CREDENTIALS_PSW%| docker login -u %DOCKER_CREDENTIALS_USR% --password-stdin'
                     
                     // Build and push client image
@@ -64,17 +64,66 @@ pipeline {
                 }
             }
         }
+
+        stage('Run Containers') {
+            steps {
+                script {
+                    // Create network if it doesn't exist
+                    bat 'docker network create devconnect-network || exit 0'
+
+                    // Stop and remove existing containers if they exist
+                    bat """
+                        docker rm -f devconnect-server 2>nul || exit 0
+                        docker rm -f devconnect-client 2>nul || exit 0
+                    """
+
+                    // Run the server container
+                    dir('server') {
+                        bat """
+                            docker run -d ^
+                                --name devconnect-server ^
+                                --network devconnect-network ^
+                                -p 5000:5000 ^
+                                --env-file .env ^
+                                %DOCKER_CREDENTIALS_USR%/devconnect:server
+                        """
+                    }
+
+                    // Run the client container
+                    bat """
+                        docker run -d ^
+                            --name devconnect-client ^
+                            --network devconnect-network ^
+                            -p 5173:80 ^
+                            %DOCKER_CREDENTIALS_USR%/devconnect:client
+                    """
+
+                    // Verify containers are running
+                    bat """
+                        echo "Checking container status..."
+                        docker ps | findstr "devconnect"
+                        timeout /t 10 /nobreak
+                    """
+                }
+            }
+        }
     }
 
     post {
         always {
             script {
-                bat 'docker logout'
+                // Clean up containers and network
+                bat """
+                    docker rm -f devconnect-server 2>nul || exit 0
+                    docker rm -f devconnect-client 2>nul || exit 0
+                    docker network rm devconnect-network 2>nul || exit 0
+                    docker logout
+                """
                 cleanWs()
             }
         }
         success {
-            echo 'Pipeline succeeded! Images have been built and pushed to Docker Hub.'
+            echo 'Pipeline succeeded! Containers are running locally.'
         }
         failure {
             echo 'Pipeline failed! Check the logs for errors.'
