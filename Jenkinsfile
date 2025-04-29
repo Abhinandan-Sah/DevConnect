@@ -1,4 +1,4 @@
-This is for window docker localhost of jenkins
+// This is for window docker localhost of jenkins
 pipeline {
     agent any
 
