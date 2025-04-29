@@ -42,7 +42,7 @@ pipeline {
             steps {
                 dir('client') {
                     bat """
-                    docker build --no-cache --pull -t %DOCKER_CREDENTIALS_USR%/devconnect:client .
+                    docker build --no-cache --pull -t %DOCKER_CREDENTIALS_USR%/devconnect:client . 
                     docker push %DOCKER_CREDENTIALS_USR%/devconnect:client
                     """
                 }
@@ -53,7 +53,7 @@ pipeline {
             steps {
                 dir('server') {
                     bat """
-                    docker build --no-cache --pull -t %DOCKER_CREDENTIALS_USR%/devconnect:server .
+                    docker build --no-cache --pull -t %DOCKER_CREDENTIALS_USR%/devconnect:server . 
                     docker push %DOCKER_CREDENTIALS_USR%/devconnect:server
                     """
                 }
@@ -74,10 +74,26 @@ pipeline {
         stage('Deploy to EC2') {
             steps {
                 script {
-                    def remoteCommands = "rm -rf ${PROJECT_DIR} && git clone ${GIT_REPO} ${PROJECT_DIR} && cd ${PROJECT_DIR} && docker-compose down || true && docker-compose pull && docker-compose build --no-cache && docker-compose up -d"
+                    def deployScript = 'deploy-devconnect.sh'
+                    def remotePath = "/home/ubuntu/${deployScript}"
 
+                    writeFile file: deployScript, text: """
+                        #!/bin/bash
+                        set -e
+                        rm -rf ${PROJECT_DIR}
+                        git clone ${GIT_REPO} ${PROJECT_DIR}
+                        cd ${PROJECT_DIR}
+                        docker-compose down || true
+                        docker-compose pull
+                        docker-compose build --no-cache
+                        docker-compose up -d
+                    """
+
+                    // Use Git Bash to SCP + SSH and run the script
                     bat """
-                    ${GIT_BASH} -c "chmod 600 \\"${SSH_KEY_PATH}\\" && ssh -o StrictHostKeyChecking=no -i \\"${SSH_KEY_PATH}\\" ${REMOTE_USER}@${REMOTE_HOST} \\"${remoteCommands.replace('"', '\\\\"')}\\""
+                    ${GIT_BASH} -c "chmod 600 '${SSH_KEY_PATH}' &&
+                    scp -i '${SSH_KEY_PATH}' -o StrictHostKeyChecking=no ${deployScript} ${REMOTE_USER}@${REMOTE_HOST}:${remotePath} &&
+                    ssh -i '${SSH_KEY_PATH}' -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} 'chmod +x ${remotePath} && bash ${remotePath}'"
                     """
                 }
             }
@@ -85,9 +101,11 @@ pipeline {
 
         stage('Check Running Containers on EC2') {
             steps {
-                bat """
-                ${GIT_BASH} -c "ssh -o StrictHostKeyChecking=no -i \\"${SSH_KEY_PATH}\\" ${REMOTE_USER}@${REMOTE_HOST} \\"docker ps\\""
-                """
+                script {
+                    bat """
+                    ${GIT_BASH} -c "ssh -o StrictHostKeyChecking=no -i '${SSH_KEY_PATH}' ${REMOTE_USER}@${REMOTE_HOST} 'docker ps'"
+                    """
+                }
             }
         }
     }
@@ -105,6 +123,7 @@ pipeline {
         }
     }
 }
+
 
 
 
