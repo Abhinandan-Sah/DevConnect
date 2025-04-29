@@ -3,126 +3,109 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_CREDENTIALS = credentials('dockerhub-creds')
-        GITHUB_CREDENTIALS = credentials('github-creds')
-        ENV_FILE = credentials('envfile')
-        
-        // SSH Configuration
+        DOCKER_CREDENTIALS = credentials('dockerhub-creds')     // DockerHub credentials (username/password)
+        GITHUB_CREDENTIALS = credentials('github-creds')        // GitHub credentials (for private repos)
+        ENV_FILE = credentials('envfile')                       // .env file as secret text
+
         REMOTE_USER = 'ubuntu'
         REMOTE_HOST = 'ec2-13-235-86-170.ap-south-1.compute.amazonaws.com'
         GIT_REPO = 'https://github.com/Abhinandan-Sah/DevConnect'
         PROJECT_DIR = 'devconnect-deploy'
-        
-        // Use forward slashes for Git Bash compatibility
         SSH_KEY_PATH = 'C:/Users/abhin/Downloads/devconnect-secret.pem'
-        GIT_BASH = 'C:/Git/bin/bash.exe'
+        GIT_BASH = '"C:\\Git\\bin\\bash.exe"'   // Adjust if Git Bash is installed elsewhere
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git url: "${env.GIT_REPO}", 
-                    branch: 'main',
-                    credentialsId: 'github-creds'
+                git url: "${env.GIT_REPO}", branch: 'main', credentialsId: 'github-creds'
             }
         }
 
         stage('Setup Environment') {
             steps {
                 dir('server') {
-                    powershell '''
-                        $env:ENV_FILE | Out-File -Encoding UTF8 .env
-                    '''
+                    bat "echo %ENV_FILE% > .env"
                 }
             }
         }
 
         stage('Docker Login') {
             steps {
-                bat 'echo %DOCKER_CREDENTIALS_PSW% | docker login -u %DOCKER_CREDENTIALS_USR% --password-stdin'
+                bat """
+                echo %DOCKER_CREDENTIALS_PSW% | docker login -u %DOCKER_CREDENTIALS_USR% --password-stdin
+                """
             }
         }
 
-        stage('Build and Push Images') {
+        stage('Build and Push Client Image') {
             steps {
-                script {
-                    // Build and push client
-                    dir('client') {
-                        bat '''
-                            docker build --no-cache --pull -t %DOCKER_CREDENTIALS_USR%/devconnect:client .
-                            docker push %DOCKER_CREDENTIALS_USR%/devconnect:client
-                        '''
-                    }
-                    
-                    // Build and push server
-                    dir('server') {
-                        bat '''
-                            docker build --no-cache --pull -t %DOCKER_CREDENTIALS_USR%/devconnect:server .
-                            docker push %DOCKER_CREDENTIALS_USR%/devconnect:server
-                        '''
-                    }
+                dir('client') {
+                    bat """
+                    docker build --no-cache --pull -t %DOCKER_CREDENTIALS_USR%/devconnect:client .
+                    docker push %DOCKER_CREDENTIALS_USR%/devconnect:client
+                    """
                 }
             }
         }
 
-        stage('Verify Images') {
+        stage('Build and Push Server Image') {
             steps {
-                bat '''
-                    echo Verifying Docker images...
-                    docker images | findstr devconnect
-                    docker pull %DOCKER_CREDENTIALS_USR%/devconnect:client
-                    docker pull %DOCKER_CREDENTIALS_USR%/devconnect:server
-                '''
+                dir('server') {
+                    bat """
+                    docker build --no-cache --pull -t %DOCKER_CREDENTIALS_USR%/devconnect:server .
+                    docker push %DOCKER_CREDENTIALS_USR%/devconnect:server
+                    """
+                }
+            }
+        }
+
+        stage('Verify Docker Images Locally') {
+            steps {
+                bat """
+                echo Verifying Docker images...
+                docker images | findstr devconnect
+                docker pull %DOCKER_CREDENTIALS_USR%/devconnect:client
+                docker pull %DOCKER_CREDENTIALS_USR%/devconnect:server
+                """
             }
         }
 
         stage('Deploy to EC2') {
             steps {
                 script {
-                    // Prepare deployment commands
-                    def deployCommands = """
-                        rm -rf ${PROJECT_DIR} && \\
-                        git clone ${GIT_REPO} ${PROJECT_DIR} && \\
-                        cd ${PROJECT_DIR} && \\
-                        docker-compose down || true && \\
-                        docker-compose pull && \\
-                        docker login -u \${DOCKER_CREDENTIALS_USR} -p \${DOCKER_CREDENTIALS_PSW} && \\
-                        docker-compose up -d && \\
-                        docker logout
-                    """.trim()
+                    def remoteCommands = "rm -rf ${PROJECT_DIR} && git clone ${GIT_REPO} ${PROJECT_DIR} && cd ${PROJECT_DIR} && docker-compose down || true && docker-compose pull && docker-compose build --no-cache && docker-compose up -d"
 
-                    // Execute via Git Bash
                     bat """
-                        "${GIT_BASH}" -c "chmod 600 ${SSH_KEY_PATH.replace('\\', '/')} && ssh -o StrictHostKeyChecking=no -i ${SSH_KEY_PATH.replace('\\', '/')} ${REMOTE_USER}@${REMOTE_HOST} '${deployCommands}'"
+                    ${GIT_BASH} -c "chmod 600 \\"${SSH_KEY_PATH}\\" && ssh -o StrictHostKeyChecking=no -i \\"${SSH_KEY_PATH}\\" ${REMOTE_USER}@${REMOTE_HOST} \\"${remoteCommands.replace('"', '\\\\"')}\\""
                     """
                 }
             }
         }
 
-        stage('Verify Deployment') {
+        stage('Check Running Containers on EC2') {
             steps {
-                script {
-                    bat """
-                        "${GIT_BASH}" -c "ssh -o StrictHostKeyChecking=no -i ${SSH_KEY_PATH.replace('\\', '/')} ${REMOTE_USER}@${REMOTE_HOST} 'docker ps'"
-                    """
-                }
+                bat """
+                ${GIT_BASH} -c "ssh -o StrictHostKeyChecking=no -i \\"${SSH_KEY_PATH}\\" ${REMOTE_USER}@${REMOTE_HOST} \\"docker ps\\""
+                """
             }
         }
     }
 
     post {
         always {
-            bat 'docker logout'
+            bat "docker logout"
             cleanWs()
         }
         success {
-            echo '✅ Pipeline succeeded! Deployment completed.'
+            echo '✅ Pipeline completed: Images pushed and deployed on EC2 successfully.'
         }
         failure {
-            echo '❌ Pipeline failed! Check the logs for errors.'
+            echo '❌ Pipeline failed. Review error logs above.'
         }
     }
 }
+
 
 
 
