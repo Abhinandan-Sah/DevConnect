@@ -128,9 +128,6 @@
 
 
 
-
-
-
 // for Devloyment into ubuntu through AWS
 pipeline {
     agent any
