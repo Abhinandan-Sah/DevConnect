@@ -179,21 +179,16 @@ pipeline {
                     // SSH Command to deploy on EC2 (Improved)
                     bat """
                         ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null %EC2_HOST% '
-                            # Remove existing DevConnect folder if it exists
                             rm -rf DevConnect
 
-                            # Clone the repo again
                             git clone https://github.com/Abhinandan-Sah/DevConnect
 
-                            # Navigate to the project directory
                             cd DevConnect
 
-                            # Check if .env file exists, if not, create it or skip docker-compose
                             if [ ! -f server/.env ]; then
                                 echo "Warning: .env file not found in server directory"
                             fi
 
-                            # Start or restart containers
                             docker-compose down || true
                             docker-compose up -d
                         '
