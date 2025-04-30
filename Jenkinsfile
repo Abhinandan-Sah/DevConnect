@@ -133,9 +133,10 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_CREDENTIALS = credentials('dockerhub-creds')
-        GITHUB_CREDENTIALS = credentials('github-creds')
-        EC2_HOST = 'ubuntu@65.1.94.55'  // 🔁 Replace with your actual EC2 IP
+        DOCKER_CREDENTIALS = credentials('dockerhub-creds')  // Your DockerHub credentials
+        GITHUB_CREDENTIALS = credentials('github-creds')     // Your GitHub credentials
+        ENV_FILE = credentials('envfile')                    // Your environment file
+        EC2_HOST = 'ubuntu@65.1.94.55'              // Replace with your EC2 public IP
     }
 
     stages {
@@ -150,18 +151,21 @@ pipeline {
         stage('Build and Push Docker Images') {
             steps {
                 script {
-                    bat 'echo %DOCKER_CREDENTIALS_PSW% | docker login -u %DOCKER_CREDENTIALS_USR% --password-stdin'
+                    // Docker login
+                    bat 'echo %DOCKER_CREDENTIALS_PSW%| docker login -u %DOCKER_CREDENTIALS_USR% --password-stdin'
 
+                    // Build and push client image
                     dir('client') {
                         bat """
-                            docker build -t %DOCKER_CREDENTIALS_USR%/devconnect:client .
+                            docker build --no-cache=false --pull=true -t %DOCKER_CREDENTIALS_USR%/devconnect:client .
                             docker push %DOCKER_CREDENTIALS_USR%/devconnect:client
                         """
                     }
 
+                    // Build and push server image
                     dir('server') {
                         bat """
-                            docker build -t %DOCKER_CREDENTIALS_USR%/devconnect:server .
+                            docker build --no-cache=false --pull=true -t %DOCKER_CREDENTIALS_USR%/devconnect:server .
                             docker push %DOCKER_CREDENTIALS_USR%/devconnect:server
                         """
                     }
@@ -171,10 +175,11 @@ pipeline {
 
         stage('Deploy on EC2 (Remove & Clone)') {
             steps {
-                sshagent(credentials: ['ec2-ssh-creds']) {
-                    sh """
-                        ssh -o StrictHostKeyChecking=no $EC2_HOST '
-                            # Remove the existing folder
+                script {
+                    // SSH Command to deploy on EC2
+                    bat """
+                        ssh -o StrictHostKeyChecking=no %EC2_HOST% '
+                            # Remove the existing folder if it exists
                             rm -rf DevConnect
 
                             # Clone the repo again
@@ -194,11 +199,12 @@ pipeline {
 
         stage('Verify Running Containers on EC2') {
             steps {
-                sshagent(credentials: ['ec2-ssh-creds']) {
-                    sh """
-                        ssh -o StrictHostKeyChecking=no $EC2_HOST '
-                            echo "Checking running containers..."
-                            docker ps | grep devconnect || echo "No devconnect containers found."
+                script {
+                    // SSH Command to verify containers are running
+                    bat """
+                        ssh -o StrictHostKeyChecking=no %EC2_HOST% '
+                            echo "Checking container status..."
+                            docker ps | findstr "devconnect"
                         '
                     """
                 }
@@ -209,18 +215,20 @@ pipeline {
     post {
         always {
             script {
+                // Clean up after the build
                 bat 'docker logout'
                 cleanWs()
             }
         }
         success {
-            echo '✅ Deployment successful on EC2!'
+            echo '✅ Pipeline succeeded! Images pushed and containers are running.'
         }
         failure {
-            echo '❌ Deployment failed. Check logs for errors.'
+            echo '❌ Pipeline failed. Check logs for details.'
         }
     }
 }
+
 
 
 
