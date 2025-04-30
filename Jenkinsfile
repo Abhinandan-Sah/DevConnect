@@ -155,7 +155,7 @@ pipeline {
             steps {
                 script {
                     dir('server') {
-                        bat 'copy /Y "%ENV_FILE%" .env'
+                        sh 'cp $ENV_FILE .env'  // Replace 'bat' with 'sh' for Ubuntu
                     }
                 }
             }
@@ -165,21 +165,23 @@ pipeline {
             steps {
                 script {
                     // Docker login
-                    bat 'echo %DOCKER_CREDENTIALS_PSW%| docker login -u %DOCKER_CREDENTIALS_USR% --password-stdin'
+                    sh '''
+                        echo $DOCKER_CREDENTIALS_PSW | docker login -u $DOCKER_CREDENTIALS_USR --password-stdin
+                    '''
                     
                     // Build & push client
                     dir('client') {
-                        bat """
-                            docker build --no-cache=false --pull=true -t %DOCKER_CREDENTIALS_USR%/devconnect:client . 
-                            docker push %DOCKER_CREDENTIALS_USR%/devconnect:client
+                        sh """
+                            docker build --no-cache=false --pull=true -t $DOCKER_CREDENTIALS_USR/devconnect:client .
+                            docker push $DOCKER_CREDENTIALS_USR/devconnect:client
                         """
                     }
                     
                     // Build & push server
                     dir('server') {
-                        bat """
-                            docker build --no-cache=false --pull=true -t %DOCKER_CREDENTIALS_USR%/devconnect:server . 
-                            docker push %DOCKER_CREDENTIALS_USR%/devconnect:server
+                        sh """
+                            docker build --no-cache=false --pull=true -t $DOCKER_CREDENTIALS_USR/devconnect:server .
+                            docker push $DOCKER_CREDENTIALS_USR/devconnect:server
                         """
                     }
                 }
@@ -189,11 +191,11 @@ pipeline {
         stage('Verify Images') {
             steps {
                 script {
-                    bat """
-                        docker images | findstr "devconnect"
+                    sh """
+                        docker images | grep "devconnect"
                         echo "Verifying images are pushed to Docker Hub..."
-                        docker pull %DOCKER_CREDENTIALS_USR%/devconnect:client
-                        docker pull %DOCKER_CREDENTIALS_USR%/devconnect:server
+                        docker pull $DOCKER_CREDENTIALS_USR/devconnect:client
+                        docker pull $DOCKER_CREDENTIALS_USR/devconnect:server
                     """
                 }
             }
@@ -239,7 +241,7 @@ pipeline {
         always {
             script {
                 // Only logout from Docker and clean workspace
-                bat 'docker logout'
+                sh 'docker logout'
                 cleanWs()
             }
         }
@@ -251,6 +253,7 @@ pipeline {
         }
     }
 }
+
 
 
 
