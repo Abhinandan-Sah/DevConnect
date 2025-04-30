@@ -77,7 +77,7 @@ const Feed = () => {
   return (
     <div className="w-full flex flex-col items-center justify-center py-8 px-4">
       <h1 className="text-3xl font-bold mb-8 text-center bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
-        Discover Developers
+        discover Developers
       </h1>
 
       <div className="relative w-full max-w-md">
