@@ -128,160 +128,41 @@
 
 
 
-// for Devloyment into ubuntu through AWS
-pipeline {
-    agent any
-
-    environment {
-        DOCKER_CREDENTIALS = credentials('dockerhub-creds')  // Your DockerHub credentials
-        GITHUB_CREDENTIALS = credentials('github-creds')     // Your GitHub credentials
-        ENV_FILE = credentials('envfile')                    // Your environment file
-        EC2_HOST = 'ubuntu@ec2-65-1-94-55.ap-south-1.compute.amazonaws.com' // Updated EC2 public DNS
-    }
-
-    stages {
-        stage('Checkout') {
-            steps {
-                git url: 'https://github.com/Abhinandan-Sah/DevConnect',
-                    branch: 'main',
-                    credentialsId: 'github-creds'
-            }
-        }
-
-        stage('Build and Push Docker Images') {
-            steps {
-                script {
-                    // Docker login
-                    bat 'echo %DOCKER_CREDENTIALS_PSW%| docker login -u %DOCKER_CREDENTIALS_USR% --password-stdin'
-
-                    // Build and push client image
-                    dir('client') {
-                        bat """
-                            docker build --no-cache=false --pull=true -t %DOCKER_CREDENTIALS_USR%/devconnect:client .
-                            docker push %DOCKER_CREDENTIALS_USR%/devconnect:client
-                        """
-                    }
-
-                    // Build and push server image
-                    dir('server') {
-                        bat """
-                            docker build --no-cache=false --pull=true -t %DOCKER_CREDENTIALS_USR%/devconnect:server .
-                            docker push %DOCKER_CREDENTIALS_USR%/devconnect:server
-                        """
-                    }
-                }
-            }
-        }
-
-        stage('Deploy on EC2 (Remove & Clone)') {
-            steps {
-                script {
-                    // SSH Command to deploy on EC2 (Improved)
-                    bat """
-                        ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null %EC2_HOST% '
-                            rm -rf DevConnect
-
-                            git clone https://github.com/Abhinandan-Sah/DevConnect
-
-                            cd DevConnect
-
-                            if [ ! -f server/.env ]; then
-                                echo "Warning: .env file not found in server directory"
-                            fi
-
-                            docker-compose down || true
-                            docker-compose up -d
-                        '
-                    """
-                }
-            }
-        }
-
-        stage('Verify Running Containers on EC2') {
-            steps {
-                script {
-                    // SSH Command to verify containers are running
-                    bat """
-                        ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null %EC2_HOST% '
-                            echo "Checking container status..."
-                            docker ps | findstr "devconnect"
-                        '
-                    """
-                }
-            }
-        }
-    }
-
-    post {
-        always {
-            script {
-                // Clean up after the build
-                bat 'docker logout'
-                cleanWs()
-            }
-        }
-        success {
-            echo '✅ Pipeline succeeded! Images pushed and containers are running.'
-        }
-        failure {
-            echo '❌ Pipeline failed. Check logs for details.'
-        }
-    }
-}
-
-
-
-
-
-
-
-
-
-
-// test of continuously running container in window docker localhost jenkins
+// for Devloyment into ubuntu through AWS (Current 30-04-2025)
 // pipeline {
 //     agent any
 
 //     environment {
-//         DOCKER_CREDENTIALS = credentials('dockerhub-creds')
-//         GITHUB_CREDENTIALS = credentials('github-creds')
-//         ENV_FILE = credentials('envfile')
+//         DOCKER_CREDENTIALS = credentials('dockerhub-creds')  // Your DockerHub credentials
+//         GITHUB_CREDENTIALS = credentials('github-creds')     // Your GitHub credentials
+//         ENV_FILE = credentials('envfile')                    // Your environment file
+//         EC2_HOST = 'ubuntu@ec2-65-1-94-55.ap-south-1.compute.amazonaws.com' // Updated EC2 public DNS
 //     }
 
 //     stages {
 //         stage('Checkout') {
 //             steps {
-//                 git url: 'https://github.com/Abhinandan-Sah/DevConnect', 
+//                 git url: 'https://github.com/Abhinandan-Sah/DevConnect',
 //                     branch: 'main',
 //                     credentialsId: 'github-creds'
 //             }
 //         }
 
-//         stage('Setup Environment') {
-//             steps {
-//                 script {
-//                     dir('server') {
-//                         bat 'copy /Y "%ENV_FILE%" .env'
-//                     }
-//                 }
-//             }
-//         }
-
-//         stage('Build and Push Images') {
+//         stage('Build and Push Docker Images') {
 //             steps {
 //                 script {
 //                     // Docker login
 //                     bat 'echo %DOCKER_CREDENTIALS_PSW%| docker login -u %DOCKER_CREDENTIALS_USR% --password-stdin'
-                    
-//                     // Build & push client
+
+//                     // Build and push client image
 //                     dir('client') {
 //                         bat """
 //                             docker build --no-cache=false --pull=true -t %DOCKER_CREDENTIALS_USR%/devconnect:client .
 //                             docker push %DOCKER_CREDENTIALS_USR%/devconnect:client
 //                         """
 //                     }
-                    
-//                     // Build & push server
+
+//                     // Build and push server image
 //                     dir('server') {
 //                         bat """
 //                             docker build --no-cache=false --pull=true -t %DOCKER_CREDENTIALS_USR%/devconnect:server .
@@ -292,34 +173,41 @@ pipeline {
 //             }
 //         }
 
-//         stage('Verify Images') {
+//         stage('Deploy on EC2 (Remove & Clone)') {
 //             steps {
 //                 script {
+//                     // SSH Command to deploy on EC2 (Improved)
 //                     bat """
-//                         docker images | findstr "devconnect"
-//                         echo "Verifying images are pushed to Docker Hub..."
-//                         docker pull %DOCKER_CREDENTIALS_USR%/devconnect:client
-//                         docker pull %DOCKER_CREDENTIALS_USR%/devconnect:server
+//                         ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null %EC2_HOST% '
+//                             rm -rf DevConnect
+
+//                             git clone https://github.com/Abhinandan-Sah/DevConnect
+
+//                             cd DevConnect
+
+//                             if [ ! -f server/.env ]; then
+//                                 echo "Warning: .env file not found in server directory"
+//                             fi
+
+//                             docker-compose down || true
+//                             docker-compose up -d
+//                         '
 //                     """
 //                 }
 //             }
 //         }
 
-//         stage('Start Containers') {
+//         stage('Verify Running Containers on EC2') {
 //             steps {
 //                 script {
-//                     bat 'docker-compose -f docker-compose.yml up -d'
+//                     // SSH Command to verify containers are running
+//                     bat """
+//                         ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null %EC2_HOST% '
+//                             echo "Checking container status..."
+//                             docker ps | findstr "devconnect"
+//                         '
+//                     """
 //                 }
-//             }
-//         }
-
-//         stage('Check Running Containers') {
-//             steps {
-//                 bat '''
-//                     echo "Checking container status..."
-//                     docker ps | findstr "devconnect"
-//                     echo "Containers are now running and will continue to run"
-//                 '''
 //             }
 //         }
 //     }
@@ -327,7 +215,7 @@ pipeline {
 //     post {
 //         always {
 //             script {
-//                 // Only logout from Docker and clean workspace
+//                 // Clean up after the build
 //                 bat 'docker logout'
 //                 cleanWs()
 //             }
@@ -340,6 +228,118 @@ pipeline {
 //         }
 //     }
 // }
+
+
+
+
+
+
+
+
+
+
+// test of continuously running container in window docker localhost jenkins
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_CREDENTIALS = credentials('dockerhub-creds')
+        GITHUB_CREDENTIALS = credentials('github-creds')
+        ENV_FILE = credentials('envfile')
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git url: 'https://github.com/Abhinandan-Sah/DevConnect', 
+                    branch: 'main',
+                    credentialsId: 'github-creds'
+            }
+        }
+
+        stage('Setup Environment') {
+            steps {
+                script {
+                    dir('server') {
+                        bat 'copy /Y "%ENV_FILE%" .env'
+                    }
+                }
+            }
+        }
+
+        stage('Build and Push Images') {
+            steps {
+                script {
+                    // Docker login
+                    bat 'echo %DOCKER_CREDENTIALS_PSW%| docker login -u %DOCKER_CREDENTIALS_USR% --password-stdin'
+                    
+                    // Build & push client
+                    dir('client') {
+                        bat """
+                            docker build --no-cache=false --pull=true -t %DOCKER_CREDENTIALS_USR%/devconnect:client .
+                            docker push %DOCKER_CREDENTIALS_USR%/devconnect:client
+                        """
+                    }
+                    
+                    // Build & push server
+                    dir('server') {
+                        bat """
+                            docker build --no-cache=false --pull=true -t %DOCKER_CREDENTIALS_USR%/devconnect:server .
+                            docker push %DOCKER_CREDENTIALS_USR%/devconnect:server
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Verify Images') {
+            steps {
+                script {
+                    bat """
+                        docker images | findstr "devconnect"
+                        echo "Verifying images are pushed to Docker Hub..."
+                        docker pull %DOCKER_CREDENTIALS_USR%/devconnect:client
+                        docker pull %DOCKER_CREDENTIALS_USR%/devconnect:server
+                    """
+                }
+            }
+        }
+
+        stage('Start Containers') {
+            steps {
+                script {
+                    bat 'docker-compose -f docker-compose.yml up -d'
+                }
+            }
+        }
+
+        stage('Check Running Containers') {
+            steps {
+                bat '''
+                    echo "Checking container status..."
+                    docker ps | findstr "devconnect"
+                    echo "Containers are now running and will continue to run"
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            script {
+                // Only logout from Docker and clean workspace
+                bat 'docker logout'
+                cleanWs()
+            }
+        }
+        success {
+            echo '✅ Pipeline succeeded! Images pushed and containers are running.'
+        }
+        failure {
+            echo '❌ Pipeline failed. Check logs for details.'
+        }
+    }
+}
 
 
 
