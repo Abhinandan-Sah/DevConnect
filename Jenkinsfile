@@ -136,7 +136,7 @@ pipeline {
         DOCKER_CREDENTIALS = credentials('dockerhub-creds')  // Your DockerHub credentials
         GITHUB_CREDENTIALS = credentials('github-creds')     // Your GitHub credentials
         ENV_FILE = credentials('envfile')                    // Your environment file
-        EC2_HOST = 'ubuntu@65.1.94.55'              // Replace with your EC2 public IP
+        EC2_HOST = 'ubuntu@ec2-65-1-94-55.ap-south-1.compute.amazonaws.com' // Updated EC2 public DNS
     }
 
     stages {
@@ -233,6 +233,8 @@ pipeline {
         }
     }
 }
+
+
 
 
 
