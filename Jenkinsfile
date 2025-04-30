@@ -135,8 +135,7 @@ pipeline {
     environment {
         DOCKER_CREDENTIALS = credentials('dockerhub-creds')
         GITHUB_CREDENTIALS = credentials('github-creds')
-        ENV_FILE = credentials('envfile')
-        EC2_HOST = 'ubuntu@65.1.94.55'  // Replace with your EC2 instance's public IP
+        EC2_HOST = 'ubuntu@65.1.94.55'  // 🔁 Replace with your actual EC2 IP
     }
 
     stages {
@@ -148,70 +147,44 @@ pipeline {
             }
         }
 
-        stage('Setup Environment') {
+        stage('Build and Push Docker Images') {
             steps {
                 script {
-                    dir('server') {
-                        sh 'cp $ENV_FILE .env'  // Replace 'bat' with 'sh' for Ubuntu
-                    }
-                }
-            }
-        }
+                    bat 'echo %DOCKER_CREDENTIALS_PSW% | docker login -u %DOCKER_CREDENTIALS_USR% --password-stdin'
 
-        stage('Build and Push Images') {
-            steps {
-                script {
-                    // Docker login
-                    sh '''
-                        echo $DOCKER_CREDENTIALS_PSW | docker login -u $DOCKER_CREDENTIALS_USR --password-stdin
-                    '''
-                    
-                    // Build & push client
                     dir('client') {
-                        sh """
-                            docker build --no-cache=false --pull=true -t $DOCKER_CREDENTIALS_USR/devconnect:client .
-                            docker push $DOCKER_CREDENTIALS_USR/devconnect:client
+                        bat """
+                            docker build -t %DOCKER_CREDENTIALS_USR%/devconnect:client .
+                            docker push %DOCKER_CREDENTIALS_USR%/devconnect:client
                         """
                     }
-                    
-                    // Build & push server
+
                     dir('server') {
-                        sh """
-                            docker build --no-cache=false --pull=true -t $DOCKER_CREDENTIALS_USR/devconnect:server .
-                            docker push $DOCKER_CREDENTIALS_USR/devconnect:server
+                        bat """
+                            docker build -t %DOCKER_CREDENTIALS_USR%/devconnect:server .
+                            docker push %DOCKER_CREDENTIALS_USR%/devconnect:server
                         """
                     }
                 }
             }
         }
 
-        stage('Verify Images') {
+        stage('Deploy on EC2 (Remove & Clone)') {
             steps {
-                script {
-                    sh """
-                        docker images | grep "devconnect"
-                        echo "Verifying images are pushed to Docker Hub..."
-                        docker pull $DOCKER_CREDENTIALS_USR/devconnect:client
-                        docker pull $DOCKER_CREDENTIALS_USR/devconnect:server
-                    """
-                }
-            }
-        }
-
-        stage('Deploy to EC2') {
-            steps {
-                sshagent(credentials: ['ec2-ssh-key']) {
+                sshagent(credentials: ['ec2-ssh-creds']) {
                     sh """
                         ssh -o StrictHostKeyChecking=no $EC2_HOST '
-                            # Ensure we are in the correct workspace directory
-                            cd /var/lib/jenkins/workspace/DevConnects
-                            
-                            # Pull the Docker images (client & server)
-                            docker pull $DOCKER_CREDENTIALS_USR/devconnect:client
-                            docker pull $DOCKER_CREDENTIALS_USR/devconnect:server
-                            
-                            # Restart Docker containers
-                            docker-compose down
+                            # Remove the existing folder
+                            rm -rf DevConnect
+
+                            # Clone the repo again
+                            git clone https://github.com/Abhinandan-Sah/DevConnect
+
+                            # Go into project directory
+                            cd DevConnect
+
+                            # Start or restart containers
+                            docker-compose down || true
                             docker-compose up -d
                         '
                     """
@@ -219,14 +192,13 @@ pipeline {
             }
         }
 
-        stage('Check Running Containers') {
+        stage('Verify Running Containers on EC2') {
             steps {
-                sshagent(credentials: ['ec2-ssh-key']) {
+                sshagent(credentials: ['ec2-ssh-creds']) {
                     sh """
                         ssh -o StrictHostKeyChecking=no $EC2_HOST '
-                            echo "Checking container status..."
-                            docker ps | grep "devconnect"
-                            echo "Containers are now running and will continue to run"
+                            echo "Checking running containers..."
+                            docker ps | grep devconnect || echo "No devconnect containers found."
                         '
                     """
                 }
@@ -237,19 +209,19 @@ pipeline {
     post {
         always {
             script {
-                // Only logout from Docker and clean workspace
-                sh 'docker logout'
+                bat 'docker logout'
                 cleanWs()
             }
         }
         success {
-            echo '✅ Pipeline succeeded! Images pushed and containers are running.'
+            echo '✅ Deployment successful on EC2!'
         }
         failure {
-            echo '❌ Pipeline failed. Check logs for details.'
+            echo '❌ Deployment failed. Check logs for errors.'
         }
     }
 }
+
 
 
 
