@@ -23,7 +23,7 @@ DevConnect is a Tinder-inspired matchmaking platform exclusively for developers 
 **Frontend:**
 - ReactJS
 - Redux Toolkit
-- TailwindCSS
+- Tailwind CSS
 - React Router dom
 
 **Backend:**
