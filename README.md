@@ -14,7 +14,7 @@ DevConnect is a Tinder-inspired matchmaking platform exclusively for developers 
 - 💬 Real-time Messaging between matched developers
 - 📄 Detailed User Profiles with Skills & Interests
 - 🔄 Swipe & Match Mechanism
-- ⚙️ Full Stack MERN Application
+- ⚙️ Full Stack MERN Applications
 
 ---
 
