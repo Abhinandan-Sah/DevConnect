@@ -1,103 +1,103 @@
-pipeline {
-    agent any
+// pipeline {
+//     agent any
 
-    environment {
-        DOCKER_CREDENTIALS = credentials('dockerhub-creds')
-        GITHUB_CREDENTIALS = credentials('github-creds')
-        ENV_FILE = credentials('envfile')
-    }
+//     environment {
+//         DOCKER_CREDENTIALS = credentials('dockerhub-creds')
+//         GITHUB_CREDENTIALS = credentials('github-creds')
+//         ENV_FILE = credentials('envfile')
+//     }
 
-    stages {
-        stage('Checkout') {
-            steps {
-                git url: 'https://github.com/Abhinandan-Sah/DevConnect', 
-                    branch: 'main',
-                    credentialsId: 'github-creds'
-            }
-        }
+//     stages {
+//         stage('Checkout') {
+//             steps {
+//                 git url: 'https://github.com/Abhinandan-Sah/DevConnect', 
+//                     branch: 'main',
+//                     credentialsId: 'github-creds'
+//             }
+//         }
 
-        stage('Setup Environment') {
-            steps {
-                script {
-                    dir('server') {
-                        sh 'cp "$ENV_FILE" .env'
-                    }
-                }
-            }
-        }
+//         stage('Setup Environment') {
+//             steps {
+//                 script {
+//                     dir('server') {
+//                         sh 'cp "$ENV_FILE" .env'
+//                     }
+//                 }
+//             }
+//         }
 
-        stage('Build and Push Images') {
-            steps {
-                script {
-                    // Docker login
-                    sh 'echo "$DOCKER_CREDENTIALS_PSW" | docker login -u "$DOCKER_CREDENTIALS_USR" --password-stdin'
+//         stage('Build and Push Images') {
+//             steps {
+//                 script {
+//                     // Docker login
+//                     sh 'echo "$DOCKER_CREDENTIALS_PSW" | docker login -u "$DOCKER_CREDENTIALS_USR" --password-stdin'
                     
-                    // Build & push client
-                    dir('client') {
-                        sh '''
-                            docker build --no-cache=false --pull=true -t $DOCKER_CREDENTIALS_USR/devconnect:client .
-                            docker push $DOCKER_CREDENTIALS_USR/devconnect:client
-                        '''
-                    }
+//                     // Build & push client
+//                     dir('client') {
+//                         sh '''
+//                             docker build --no-cache=false --pull=true -t $DOCKER_CREDENTIALS_USR/devconnect:client .
+//                             docker push $DOCKER_CREDENTIALS_USR/devconnect:client
+//                         '''
+//                     }
                     
-                    // Build & push server
-                    dir('server') {
-                        sh '''
-                            docker build --no-cache=false --pull=true -t $DOCKER_CREDENTIALS_USR/devconnect:server .
-                            docker push $DOCKER_CREDENTIALS_USR/devconnect:server
-                        '''
-                    }
-                }
-            }
-        }
+//                     // Build & push server
+//                     dir('server') {
+//                         sh '''
+//                             docker build --no-cache=false --pull=true -t $DOCKER_CREDENTIALS_USR/devconnect:server .
+//                             docker push $DOCKER_CREDENTIALS_USR/devconnect:server
+//                         '''
+//                     }
+//                 }
+//             }
+//         }
 
-        stage('Verify Images') {
-            steps {
-                script {
-                    sh '''
-                        docker images | grep devconnect
-                        echo "Verifying images are pushed to Docker Hub..."
-                        docker pull $DOCKER_CREDENTIALS_USR/devconnect:client
-                        docker pull $DOCKER_CREDENTIALS_USR/devconnect:server
-                    '''
-                }
-            }
-        }
+//         stage('Verify Images') {
+//             steps {
+//                 script {
+//                     sh '''
+//                         docker images | grep devconnect
+//                         echo "Verifying images are pushed to Docker Hub..."
+//                         docker pull $DOCKER_CREDENTIALS_USR/devconnect:client
+//                         docker pull $DOCKER_CREDENTIALS_USR/devconnect:server
+//                     '''
+//                 }
+//             }
+//         }
 
-        stage('Start Containers') {
-            steps {
-                script {
-                    sh 'docker-compose -f docker-compose.yml up -d'
-                }
-            }
-        }
+//         stage('Start Containers') {
+//             steps {
+//                 script {
+//                     sh 'docker-compose -f docker-compose.yml up -d'
+//                 }
+//             }
+//         }
 
-        stage('Check Running Containers') {
-            steps {
-                sh '''
-                    echo "Checking container status..."
-                    docker ps | grep devconnect
-                    echo "Containers are now running and will continue to run"
-                '''
-            }
-        }
-    }
+//         stage('Check Running Containers') {
+//             steps {
+//                 sh '''
+//                     echo "Checking container status..."
+//                     docker ps | grep devconnect
+//                     echo "Containers are now running and will continue to run"
+//                 '''
+//             }
+//         }
+//     }
 
-    post {
-        always {
-            script {
-                sh 'docker logout'
-                cleanWs()
-            }
-        }
-        success {
-            echo '✅ Pipeline succeeded! Images pushed and containers are running.'
-        }
-        failure {
-            echo '❌ Pipeline failed. Check logs for details.'
-        }
-    }
-}
+//     post {
+//         always {
+//             script {
+//                 sh 'docker logout'
+//                 cleanWs()
+//             }
+//         }
+//         success {
+//             echo '✅ Pipeline succeeded! Images pushed and containers are running.'
+//         }
+//         failure {
+//             echo '❌ Pipeline failed. Check logs for details.'
+//         }
+//     }
+// }
 
 
 
@@ -339,107 +339,107 @@ pipeline {
 
 
 // test of continuously running container in window docker localhost jenkins
-// pipeline {
-//     agent any
+pipeline {
+    agent any
 
-//     environment {
-//         DOCKER_CREDENTIALS = credentials('dockerhub-creds')
-//         GITHUB_CREDENTIALS = credentials('github-creds')
-//         ENV_FILE = credentials('envfile')
-//     }
+    environment {
+        DOCKER_CREDENTIALS = credentials('dockerhub-creds')
+        GITHUB_CREDENTIALS = credentials('github-creds')
+        ENV_FILE = credentials('envfile')
+    }
 
-//     stages {
-//         stage('Checkout') {
-//             steps {
-//                 git url: 'https://github.com/Abhinandan-Sah/DevConnect', 
-//                     branch: 'main',
-//                     credentialsId: 'github-creds'
-//             }
-//         }
+    stages {
+        stage('Checkout') {
+            steps {
+                git url: 'https://github.com/Abhinandan-Sah/DevConnect', 
+                    branch: 'main',
+                    credentialsId: 'github-creds'
+            }
+        }
 
-//         stage('Setup Environment') {
-//             steps {
-//                 script {
-//                     dir('server') {
-//                         bat 'copy /Y "%ENV_FILE%" .env'
-//                     }
-//                 }
-//             }
-//         }
+        stage('Setup Environment') {
+            steps {
+                script {
+                    dir('server') {
+                        bat 'copy /Y "%ENV_FILE%" .env'
+                    }
+                }
+            }
+        }
 
-//         stage('Build and Push Images') {
-//             steps {
-//                 script {
-//                     // Docker login
-//                     bat 'echo %DOCKER_CREDENTIALS_PSW%| docker login -u %DOCKER_CREDENTIALS_USR% --password-stdin'
+        stage('Build and Push Images') {
+            steps {
+                script {
+                    // Docker login
+                    bat 'echo %DOCKER_CREDENTIALS_PSW%| docker login -u %DOCKER_CREDENTIALS_USR% --password-stdin'
                     
-//                     // Build & push client
-//                     dir('client') {
-//                         bat """
-//                             docker build --no-cache=false --pull=true -t %DOCKER_CREDENTIALS_USR%/devconnect:client .
-//                             docker push %DOCKER_CREDENTIALS_USR%/devconnect:client
-//                         """
-//                     }
+                    // Build & push client
+                    dir('client') {
+                        bat """
+                            docker build --no-cache=false --pull=true -t %DOCKER_CREDENTIALS_USR%/devconnect:client .
+                            docker push %DOCKER_CREDENTIALS_USR%/devconnect:client
+                        """
+                    }
                     
-//                     // Build & push server
-//                     dir('server') {
-//                         bat """
-//                             docker build --no-cache=false --pull=true -t %DOCKER_CREDENTIALS_USR%/devconnect:server .
-//                             docker push %DOCKER_CREDENTIALS_USR%/devconnect:server
-//                         """
-//                     }
-//                 }
-//             }
-//         }
+                    // Build & push server
+                    dir('server') {
+                        bat """
+                            docker build --no-cache=false --pull=true -t %DOCKER_CREDENTIALS_USR%/devconnect:server .
+                            docker push %DOCKER_CREDENTIALS_USR%/devconnect:server
+                        """
+                    }
+                }
+            }
+        }
 
-//         stage('Verify Images') {
-//             steps {
-//                 script {
-//                     bat """
-//                         docker images | findstr "devconnect"
-//                         echo "Verifying images are pushed to Docker Hub..."
-//                         docker pull %DOCKER_CREDENTIALS_USR%/devconnect:client
-//                         docker pull %DOCKER_CREDENTIALS_USR%/devconnect:server
-//                     """
-//                 }
-//             }
-//         }
+        stage('Verify Images') {
+            steps {
+                script {
+                    bat """
+                        docker images | findstr "devconnect"
+                        echo "Verifying images are pushed to Docker Hub..."
+                        docker pull %DOCKER_CREDENTIALS_USR%/devconnect:client
+                        docker pull %DOCKER_CREDENTIALS_USR%/devconnect:server
+                    """
+                }
+            }
+        }
 
-//         stage('Start Containers') {
-//             steps {
-//                 script {
-//                     bat 'docker-compose -f docker-compose.yml up -d'
-//                 }
-//             }
-//         }
+        stage('Start Containers') {
+            steps {
+                script {
+                    bat 'docker-compose -f docker-compose.yml up -d'
+                }
+            }
+        }
 
-//         stage('Check Running Containers') {
-//             steps {
-//                 bat '''
-//                     echo "Checking container status..."
-//                     docker ps | findstr "devconnect"
-//                     echo "Containers are now running and will continue to run"
-//                 '''
-//             }
-//         }
-//     }
+        stage('Check Running Containers') {
+            steps {
+                bat '''
+                    echo "Checking container status..."
+                    docker ps | findstr "devconnect"
+                    echo "Containers are now running and will continue to run"
+                '''
+            }
+        }
+    }
 
-//     post {
-//         always {
-//             script {
-//                 // Only logout from Docker and clean workspace
-//                 bat 'docker logout'
-//                 cleanWs()
-//             }
-//         }
-//         success {
-//             echo '✅ Pipeline succeeded! Images pushed and containers are running.'
-//         }
-//         failure {
-//             echo '❌ Pipeline failed. Check logs for details.'
-//         }
-//     }
-// }
+    post {
+        always {
+            script {
+                // Only logout from Docker and clean workspace
+                bat 'docker logout'
+                cleanWs()
+            }
+        }
+        success {
+            echo '✅ Pipeline succeeded! Images pushed and containers are running.'
+        }
+        failure {
+            echo '❌ Pipeline failed. Check logs for details.'
+        }
+    }
+}
 
 
 
