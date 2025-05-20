@@ -43,7 +43,7 @@ authRouter.post("/signup", async (req, res) => {
     // Set the token in cookie
     res.cookie("token", token, {
       httpOnly: true,
-      sameSite: "None", // enables cross-origin
+      sameSite: "Lax", // enables cross-origin
       secure: false, // true if using HTTPS
       expires: new Date(Date.now() + 8 * 3600000),
     });
@@ -84,7 +84,7 @@ authRouter.post("/login", async (req, res) => {
       // res.cookie("token", token, {expires: new Date(Date.now()+ 8 * 3600000)});
       res.cookie("token", token, {
         httpOnly: true,
-        sameSite: "None", // enables cross-origin
+        sameSite: "Lax", // enables cross-origin
         secure: false, // true if using HTTPS
         expires: new Date(Date.now() + 8 * 3600000),
       });
@@ -111,7 +111,7 @@ authRouter.post("/logout", async (req, res) => {
   console.log("Logout");
   res.cookie("token", null, {
     httpOnly: true,
-    sameSite: "None",
+    sameSite: "Lax",
     secure: false,
     expires: new Date(Date.now()),
   });
