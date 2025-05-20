@@ -21,13 +21,26 @@ const chatRouter = require("./routes/chat.js");
 
 const port = process.env.PORT;
 
+// app.use(
+//   cors({
+//     origin: ["http://localhost:5173","http://20.40.54.228"],
+//     credentials: true,
+//   })
+// );
+
 app.use(
   cors({
-    // origin: "http://localhost:5173",
-    origin: "http://20.40.54.228",
+    origin: [
+      "http://20.40.54.228:5173",
+      "http://20.40.54.228",
+      "http://devconnects.tech",
+      "http://www.devconnects.tech",
+      "http://app.devconnects.tech"
+    ],
     credentials: true,
   })
 );
+
 app.use(express.json());
 app.use(cookieParser());
 
