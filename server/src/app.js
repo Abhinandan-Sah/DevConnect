@@ -28,18 +28,20 @@ const port = process.env.PORT;
 //   })
 // );
 
+
 app.use(
   cors({
     origin: [
-      "http://20.40.54.228:5173",
-      "http://20.40.54.228",
       "http://devconnects.tech",
       "http://www.devconnects.tech",
-      "http://app.devconnects.tech"
+      "http://20.40.54.228:5173",
+      "http://20.40.54.228",
+      "http://localhost:5173" // optional for local testing
     ],
     credentials: true,
   })
 );
+
 
 app.use(express.json());
 app.use(cookieParser());
