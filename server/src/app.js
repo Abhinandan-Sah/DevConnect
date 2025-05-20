@@ -33,7 +33,7 @@ app.use(
   cors({
     origin: [
       "http://devconnects.tech",
-      "http://www.devconnects.tech",
+      "www.devconnects.tech",
       "http://20.40.54.228:5173",
       "http://20.40.54.228",
       "http://localhost:5173" // optional for local testing

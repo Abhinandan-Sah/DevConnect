@@ -12,5 +12,5 @@ export const BASE_URL =
   location.hostname === "devconnects.tech" ||
   location.hostname === "www.devconnects.tech" ||
   location.hostname === "20.40.54.228"
-    ? `http://${location.hostname}/api`
+    ? `http://${location.hostname}:5000`
     : "/api";
