@@ -30,19 +30,35 @@ const port = process.env.PORT;
 // );
 
 
-app.use(
-  cors({
-    origin: [
-      "http://devconnects.tech",
-      "www.devconnects.tech",
-      "http://20.40.54.228:5173",
-      "http://20.40.54.228",
-      "http://localhost:5173" // optional for local testing
-    ],
-    credentials: true,
-  })
-);
+// app.use(
+//   cors({
+//     origin: [
+//       "http://devconnects.tech",
+//       "www.devconnects.tech",
+//       "http://20.40.54.228:5173",
+//       "http://20.40.54.228",
+//       "http://localhost:5173" // optional for local testing
+//     ],
+//     credentials: true,
+//   })
+// );
 
+app.use(cors({
+    origin: process.env.NODE_ENV === 'production'
+      ? [
+          'http://devconnects.tech',
+          'https://devconnects.tech',
+          'http://www.devconnects.tech',
+          'https://www.devconnects.tech',
+          'http://20.40.54.228:5173',
+          'http://20.40.54.228'
+        ]
+      : 'http://localhost:5173',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    exposedHeaders: ['Set-Cookie']
+}));
 
 app.use(express.json());
 app.use(cookieParser());

@@ -6,6 +6,9 @@ const {
 } = require("../utils/validation.js");
 const bcrypt = require("bcryptjs");
 const userModel = require("../models/user");
+const redisClient = require("../config/redis.js");
+const jwt = require("jsonwebtoken");
+const { userAuth } = require("../middlewares/auth.js");
 
 authRouter.post("/signup", async (req, res) => {
   try {
@@ -31,8 +34,8 @@ authRouter.post("/signup", async (req, res) => {
     const savedUser = await user.save();
     // Clear existing cookie (important)
     res.clearCookie("token", {
-      // httpOnly: true,
-      // secure: true,  // Use this in production with HTTPS
+      httpOnly: true,
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
       sameSite: "None",
     });
     // Generate JWT Token
@@ -42,10 +45,10 @@ authRouter.post("/signup", async (req, res) => {
     // res.cookie("token", token, {expires: new Date(Date.now()+ 8 * 3600000)});
     // Set the token in cookie
     res.cookie("token", token, {
-      httpOnly: true,
-      sameSite: "Lax", // enables cross-origin
-      secure: false, // true if using HTTPS
-      expires: new Date(Date.now() + 8 * 3600000),
+      httpOnly: true, // Prevents client-side JavaScript from accessing the cookie
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax", // Allows sending cookies on top-level navigation GET requests
+      secure: process.env.NODE_ENV === "production", // only HTTPS in prod
+      expires: new Date(Date.now() + 3600000), // 1 hours from now
     });
     res.json({ message: "User Added Successfully!", data: savedUser });
   } catch (err) {
@@ -68,15 +71,12 @@ authRouter.post("/login", async (req, res) => {
     // const isPasswordValid = await bcrypt.compare(password, user.password);
     const isPasswordValid = await user.validatePassword(password);
     if (isPasswordValid) {
-      // Clear existing cookie (important)
       res.clearCookie("token", {
-        // httpOnly: true,
-        // secure: true,  // Use this in production with HTTPS
-        // sameSite: "None"
         httpOnly: true,
-        sameSite: "Lax",
-        secure: false,
+        sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+        secure: process.env.NODE_ENV === "production",
       });
+
       // Generate JWT Token
       const token = await user.getJWT();
 
@@ -84,9 +84,9 @@ authRouter.post("/login", async (req, res) => {
       // res.cookie("token", token, {expires: new Date(Date.now()+ 8 * 3600000)});
       res.cookie("token", token, {
         httpOnly: true,
-        sameSite: "Lax", // enables cross-origin
-        secure: false, // true if using HTTPS
-        expires: new Date(Date.now() + 8 * 3600000),
+        sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+        secure: process.env.NODE_ENV === "production", // only HTTPS in prod
+        expires: new Date(Date.now() + 3600000), // optional
       });
 
       // res.send("Login Successful");
@@ -107,15 +107,31 @@ authRouter.post("/login", async (req, res) => {
 //     });
 //     res.send("Logout Successfull!!");
 // });
-authRouter.post("/logout", async (req, res) => {
-  console.log("Logout");
+authRouter.post("/logout", userAuth, async (req, res) => {
+  
+  try{
+    const { token } = req.cookies;
+   if (!token) {
+      return res.status(401).json({ message: "No token found" });
+    }
+
+  const payload = jwt.decode(token);
+
+  await redisClient.set(`token:${token}`, "Blocked");
+  await redisClient.expire(`token:${token}`, payload.exp); // 1800 is second which is 30 minutes
   res.cookie("token", null, {
     httpOnly: true,
-    sameSite: "Lax",
-    secure: false,
+    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+    secure: process.env.NODE_ENV === "production", // only HTTPS in prod
     expires: new Date(Date.now()),
   });
   res.send("Logout Successful!!");
+
+  }
+  catch (err) {
+    console.error("Error during logout:", err);
+    res.status(500).send("Internal Server Error");
+  }
 });
 
 module.exports = authRouter;
