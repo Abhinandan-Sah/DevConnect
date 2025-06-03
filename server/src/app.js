@@ -18,7 +18,8 @@ require("./utils/cronjob.js");
 const http = require("http");
 const initilizeSocket = require("./utils/socket.js");
 const chatRouter = require("./routes/chat.js");
-const redisClient = require("./config/redis.js")
+const redisClient = require("./config/redis.js");
+const rateLimiter = require("./middlewares/rateLimiter.js");
 
 const port = process.env.PORT;
 
@@ -62,6 +63,7 @@ app.use(cors({
 
 app.use(express.json());
 app.use(cookieParser());
+app.use(rateLimiter)
 
 app.use("/", authRouter);
 app.use("/", profileRouter);
