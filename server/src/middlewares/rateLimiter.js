@@ -8,7 +8,10 @@ const rateLimiter = async(req, res, next) => {
       const ip = req.ip;
       const currentTime = Date.now();
 
-      redisClient.incr(ip)
+      const count = await redisClient.incr(ip);
+      if(count>60){
+        throw new Error("Rate limit exceeded. Please try again later.");
+      }
   }
   catch(err) {
     console.error("Error in rate limiter:", err);
