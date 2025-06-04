@@ -4,14 +4,15 @@ const rateLimiter = async(req, res, next) => {
 
   try{
       const ip = req.ip;
-      const currentTime = Date.now();
-
-      const count = await redisClient.incr(ip);
-      if(count>60){
+      if (!ip) {
+        return res.status(400).json({ error: "IP address not found." });
+      }
+      const no_of_request = await redisClient.incr(ip);
+      if(no_of_request>60){
         throw new Error("Rate limit exceeded. Please try again later.");
       }
 
-      if(count ===1) {
+      if(no_of_request ===1) {
         await redisClient.expire(3600); // Set expiration time to 1 hour (3600 seconds)
       }
 
