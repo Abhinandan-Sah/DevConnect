@@ -10,6 +10,8 @@ const rateLimiter = async(req, res, next) => {
     // Increment request count for IP
     const requestCount = await redisClient.incr(ip);
 
+
+    
     // Check if limit exceeded
     if (requestCount > 16) {
       throw new Error("Rate limit exceeded. Please try again later.");
