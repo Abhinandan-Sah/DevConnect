@@ -13,9 +13,10 @@ const rateLimiter = async(req, res, next) => {
 
     
 
-    
+
     // Check if limit exceeded
     if (requestCount > 16) {
+      
       throw new Error("Rate limit exceeded. Please try again later.");
     }
 
