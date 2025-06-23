@@ -45,7 +45,7 @@ const port = process.env.SERVER_PORT;
 // );
 
 app.use(cors({
-    origin: process.env.NODE_ENV === 'production'
+    origin: process.env.SERVER_ENV === 'production'
       ? [
           'http://devconnects.tech',
           'https://devconnects.tech',

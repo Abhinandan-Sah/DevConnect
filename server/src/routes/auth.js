@@ -35,7 +35,7 @@ authRouter.post("/signup", async (req, res) => {
     // Clear existing cookie (important)
     res.clearCookie("token", {
       httpOnly: true,
-      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+      sameSite: process.env.SERVER_ENV === "production" ? "None" : "Lax",
       sameSite: "None",
     });
     // Generate JWT Token
@@ -46,8 +46,8 @@ authRouter.post("/signup", async (req, res) => {
     // Set the token in cookie
     res.cookie("token", token, {
       httpOnly: true, // Prevents client-side JavaScript from accessing the cookie
-      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax", // Allows sending cookies on top-level navigation GET requests
-      secure: process.env.NODE_ENV === "production", // only HTTPS in prod
+      sameSite: process.env.SERVER_ENV === "production" ? "None" : "Lax", // Allows sending cookies on top-level navigation GET requests
+      secure: process.env.SERVER_ENV === "production", // only HTTPS in prod
       expires: new Date(Date.now() + 3600000), // 1 hours from now
     });
     res.json({ message: "User Added Successfully!", data: savedUser });
@@ -73,8 +73,8 @@ authRouter.post("/login", async (req, res) => {
     if (isPasswordValid) {
       res.clearCookie("token", {
         httpOnly: true,
-        sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.SERVER_ENV === "production" ? "None" : "Lax",
+        secure: process.env.SERVER_ENV === "production",
       });
 
       // Generate JWT Token
@@ -84,8 +84,8 @@ authRouter.post("/login", async (req, res) => {
       // res.cookie("token", token, {expires: new Date(Date.now()+ 8 * 3600000)});
       res.cookie("token", token, {
         httpOnly: true,
-        sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-        secure: process.env.NODE_ENV === "production", // only HTTPS in prod
+        sameSite: process.env.SERVER_ENV === "production" ? "None" : "Lax",
+        secure: process.env.SERVER_ENV === "production", // only HTTPS in prod
         expires: new Date(Date.now() + 3600000), // optional
       });
 
@@ -121,8 +121,8 @@ authRouter.post("/logout", userAuth, async (req, res) => {
   await redisClient.expire(`token:${token}`, payload.exp); // 1800 is second which is 30 minutes
   res.cookie("token", null, {
     httpOnly: true,
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-    secure: process.env.NODE_ENV === "production", // only HTTPS in prod
+    sameSite: process.env.SERVER_ENV === "production" ? "None" : "Lax",
+    secure: process.env.SERVER_ENV === "production", // only HTTPS in prod
     expires: new Date(Date.now()),
   });
   res.send("Logout Successful!!");
