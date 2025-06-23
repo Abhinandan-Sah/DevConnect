@@ -21,7 +21,7 @@ const chatRouter = require("./routes/chat.js");
 const redisClient = require("./config/redis.js");
 const rateLimiter = require("./middlewares/rateLimiter.js");
 
-const port = process.env.PORT;
+const port = process.env.SERVER_PORT;
 
 // app.use(
 //   cors({
