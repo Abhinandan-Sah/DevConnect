@@ -19,6 +19,7 @@
 export const BASE_URL = (() => {
   const hostname = window.location.hostname;
   const AZURE_API = 'http://20.40.54.228:5000';
+  const RENDER_API = 'https://devconnect-ttjp.onrender.com';
 
   // Development or Production check
   if (hostname === 'localhost') {
@@ -30,6 +31,12 @@ export const BASE_URL = (() => {
       hostname === 'www.devconnects.tech' || 
       hostname === '20.40.54.228') {
     return AZURE_API;
+  }
+
+   if (
+    hostname === 'devconnect-ttjp.onrender.com'
+  ) {
+    return RENDER_API;
   }
 
   return '/api'; // Fallback
