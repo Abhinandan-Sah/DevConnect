@@ -12,7 +12,7 @@ const Footer = () => {
               <Code className="h-5 w-5" />
             </div>
             <span className="font-bold text-lg bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
-              DevConnect
+              DevConnects
             </span>
           </div>
 
