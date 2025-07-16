@@ -41,4 +41,9 @@ DevConnect is a Tinder-inspired matchmaking platform exclusively for developers 
 ```bash
 git clone https://github.com/Abhinandan-Sah/DevConnect.git
 cd DevConnect
+cd client
 npm install
+npm run dev
+cd ..
+cd install
+npm run dev
