@@ -51,8 +51,8 @@ app.use(cors({
           'https://devconnects.tech',
           'http://www.devconnects.tech',
           'https://www.devconnects.tech',
-          'http://20.40.54.228:5173',
-          'http://20.40.54.228'
+          'http://20.244.50.103:5173',
+          'http://20.244.50.103'
         ]
       : 'http://localhost:5173',
     credentials: true,
