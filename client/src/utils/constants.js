@@ -44,6 +44,7 @@ export const BASE_URL = (() => {
   const hostname = window.location.hostname;
   const RENDER_API = 'https://devconnect-ttjp.onrender.com/api';
   const AZURE_API = 'http://20.244.50.103/api';
+  const DEVCONNECTS_API = 'https://devconnects.tech/api';
 
   // Development or Production check
   if (hostname === 'localhost') {
@@ -53,20 +54,19 @@ export const BASE_URL = (() => {
   // For both domain and direct IP access
   if (
     hostname === 'devconnects.tech' ||
-    hostname === 'www.devconnects.tech' ||
-    hostname === '20.244.50.103'
+    hostname === 'www.devconnects.tech'
   ) {
-    return AZURE_API;
+    return DEVCONNECTS_API;
   }
 
   if (hostname === 'devconnect-ttjp.onrender.com') {
     return RENDER_API;
   }
 
-  // // For new API IP
-  // if (hostname === '20.244.50.103') {
-  //   return NEW_API;
-  // }
+  // For new API IP
+  if (hostname === '20.244.50.103') {
+    return AZURE_API;
+  }
 
   return '/api'; // Fallback
   })();
