@@ -47,3 +47,4 @@ npm run dev
 cd ..
 cd install
 npm run dev
+go to http://localhost:5000
