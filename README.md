@@ -137,6 +137,6 @@ For questions, suggestions, or support, open an issue or contact [Abhinandan Sah
 
 ---
 
-## 📃 License By
+## 📃 License By Avi
 
 This project is licensed under the MIT
