@@ -126,7 +126,7 @@ DevConnect/
 
 - Use HTTPS in production for both frontend and backend.
 - Set secure cookie options (`httpOnly`, `secure`, `sameSite`).
-- Restrict CORS origins in production.
+- Restrict CORS origins in productions.
 - Store secrets and credentials in environment variables.
 
 ---
