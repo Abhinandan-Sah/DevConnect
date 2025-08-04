@@ -139,4 +139,4 @@ For questions, suggestions, or support, open an issue or contact [Abhinandan Sah
 
 ## 📃 License By 
 
-This project is licensed under the MIT by Abhinandan Sah
+This project is licensed by Abhinandan Sah
