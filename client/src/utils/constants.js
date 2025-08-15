@@ -70,3 +70,34 @@ export const BASE_URL = (() => {
 
   return '/api'; // Fallback
   })();
+
+  export const techSkillsOptions = [
+  { value: "JavaScript", label: "JavaScript" },
+  { value: "React", label: "React" },
+  { value: "Node.js", label: "Node.js" },
+  { value: "Python", label: "Python" },
+  { value: "Django", label: "Django" },
+  { value: "MongoDB", label: "MongoDB" },
+  { value: "TypeScript", label: "TypeScript" },
+  { value: "Express", label: "Express" },
+  { value: "HTML", label: "HTML" },
+  { value: "CSS", label: "CSS" },
+  { value: "Java", label: "Java" },
+  { value: "C++", label: "C++" },
+  { value: "AWS", label: "AWS" },
+  { value: "Docker", label: "Docker" },
+  // Add more as needed
+];
+
+/**
+ * Calculates Jaccard similarity between two arrays (e.g., skills).
+ * Returns a value between 0 and 1.
+ */
+export function jaccardSimilarity(arrA, arrB) {
+  if (!arrA || !arrB || arrA.length === 0 && arrB.length === 0) return 0;
+  const setA = new Set(arrA);
+  const setB = new Set(arrB);
+  const intersection = new Set([...setA].filter(x => setB.has(x)));
+  const union = new Set([...setA, ...setB]);
+  return intersection.size / union.size;
+}

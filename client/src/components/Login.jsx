@@ -51,7 +51,10 @@ const Login = () => {
         },
         { withCredentials: true },
       )
-      dispatch(addUser(response.data))
+       // Fetch full profile after signup
+      const profileRes = await axios.get(BASE_URL + "/profile/view", { withCredentials: true });
+      dispatch(addUser(profileRes.data));
+      // dispatch(addUser(response.data))
       navigate("/profile")
     } catch (err) {
       setError(err?.response?.data || "Something went wrong")

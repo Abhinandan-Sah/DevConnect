@@ -7,19 +7,16 @@ import { addFeed } from "../utils/feedSlice"
 import axios from "axios"
 import UserCard from "./UserCard"
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
+import { jaccardSimilarity } from "../utils/constants"
 
 const Feed = () => {
-  const feed = useSelector((store) => store.feed)
-  const dispatch = useDispatch()
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [isLoading, setIsLoading] = useState(true)
+  const feed = useSelector((store) => store.feed);
+  const currentUser = useSelector((store) => store.user);
+  const dispatch = useDispatch();
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // if (!feed) {
-    //   getFeed()
-    // } else {
-    //   setIsLoading(false)
-    // }
       getFeed()
 
   }, [])
@@ -36,7 +33,16 @@ const Feed = () => {
     } finally {
       setIsLoading(false)
     }
-  }
+  };
+
+  // Sort feed by Jaccard similarity to current user
+  const sortedFeed = feed
+    ? [...feed].sort((a, b) => {
+        const simA = jaccardSimilarity(currentUser?.skills || [], a.skills || [])
+        const simB = jaccardSimilarity(currentUser?.skills || [], b.skills || [])
+        return simB - simA // descending order
+      })
+    : []
 
   const handlePrevious = () => {
     if (currentIndex > 0) {
@@ -93,7 +99,7 @@ const Feed = () => {
           </div>
         )}
 
-        {feed.map((user, index) => (
+        {sortedFeed.map((user, index) => (
           <div
             key={user?._id || user?.emailId}
             className={`transition-all duration-500 ease-in-out ${
