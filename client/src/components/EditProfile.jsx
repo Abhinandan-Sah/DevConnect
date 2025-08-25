@@ -44,8 +44,9 @@ const EditProfile = ({ user }) => {
       setGender(user.gender || "");
       setAge(user.age || "");
       setPhotoURL(user.photoURL || "");
+      setSkills(user.skills || []);
     }
-  }, []);
+  }, [user]);
 
   const saveProfile = async () => {
     setError("");
@@ -70,7 +71,7 @@ const EditProfile = ({ user }) => {
       );
 
       dispatch(addUser(response?.data?.data));
-      setPhotoURL(response?.data?.data?.photoURL || ""); // <-- update photoURL state here
+      // setPhotoURL(response?.data?.data?.photoURL || ""); // <-- update photoURL state here
       setSelectedPhoto(null);
       setShowToast(true);
       if(fileInputRef.current){
@@ -107,9 +108,11 @@ const EditProfile = ({ user }) => {
                 <div className="h-32 w-32 rounded-full border-4 border-white dark:border-gray-800 overflow-hidden bg-white dark:bg-gray-700 transition-colors duration-200">
                   {photoURL ? (
                     <img
-                      src={photoURL ? `${photoURL}?${Date.now()}` : "/placeholder.svg"}
+                      // ✅ Use the local photoURL state, which is now synced with Redux
+                      src={`${photoURL}?${Date.now()}`}
                       alt="Profile"
                       className="h-full w-full object-cover"
+                      referrerPolicy="no-referrer"
                     />
                   ) : (
                     <div className="h-full w-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">

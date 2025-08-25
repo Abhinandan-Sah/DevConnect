@@ -1,46 +1,58 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import axios from "axios"
-import { useDispatch } from "react-redux"
-import { addUser } from "../utils/userSlice"
-import { useNavigate } from "react-router-dom"
-import { BASE_URL } from "../utils/constants"
-import { Code, Mail, Lock, User, ArrowRight, Loader2, Moon, Sun } from "lucide-react"
-import { useTheme } from "../utils/theme-context"
+import { useState } from "react";
+import axios from "axios";
+import { useDispatch } from "react-redux";
+import { addUser } from "../utils/userSlice";
+import { useNavigate } from "react-router-dom";
+import { BASE_URL } from "../utils/constants";
+import {
+  Code,
+  Mail,
+  Lock,
+  User,
+  ArrowRight,
+  Loader2,
+  Moon,
+  Sun,
+} from "lucide-react";
+import { useTheme } from "../utils/theme-context";
+import { GoogleLogin } from "@react-oauth/google";
+import { Eye, EyeOff } from "lucide-react";
 
 const Login = () => {
-  const [emailId, setEmailId] = useState("")
-  const [password, setPassword] = useState("")
-  const [firstName, setFirstName] = useState("")
-  const [lastName, setLastName] = useState("")
-  const [isLoginForm, setIsLoginForm] = useState(true)
-  const [error, setError] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const { theme, toggleTheme } = useTheme()
+  const [emailId, setEmailId] = useState("");
+  const [password, setPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [isLoginForm, setIsLoginForm] = useState(true);
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { theme, toggleTheme } = useTheme();
+  const [showPassword, setShowPassword] = useState(false);
 
-  const dispatch = useDispatch()
-  const navigate = useNavigate()
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const handleSignUp = async () => {
     if (!firstName || !lastName || !emailId || !password) {
-      setError("All fields are required")
-      return
+      setError("All fields are required");
+      return;
     }
 
     if (!validateEmail(emailId)) {
-      setError("Please enter a valid email address")
-      return
+      setError("Please enter a valid email address");
+      return;
     }
 
     if (password.length < 6) {
-      setError("Password must be at least 6 characters")
-      return
+      setError("Password must be at least 6 characters");
+      return;
     }
 
     try {
-      setIsLoading(true)
-      setError("")
+      setIsLoading(true);
+      setError("");
       const response = await axios.post(
         BASE_URL + "/signup",
         {
@@ -49,49 +61,51 @@ const Login = () => {
           emailId,
           password,
         },
-        { withCredentials: true },
-      )
-       // Fetch full profile after signup
-      const profileRes = await axios.get(BASE_URL + "/profile/view", { withCredentials: true });
+        { withCredentials: true }
+      );
+      // Fetch full profile after signup
+      const profileRes = await axios.get(BASE_URL + "/profile/view", {
+        withCredentials: true,
+      });
       dispatch(addUser(profileRes.data));
       // dispatch(addUser(response.data))
-      navigate("/profile")
+      navigate("/profile");
     } catch (err) {
-      setError(err?.response?.data || "Something went wrong")
+      setError(err?.response?.data || "Something went wrong");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleLogin = async () => {
     if (!emailId || !password) {
-      setError("Email and password are required")
-      return
+      setError("Email and password are required");
+      return;
     }
 
     try {
-      setIsLoading(true)
-      setError("")
+      setIsLoading(true);
+      setError("");
       const response = await axios.post(
         BASE_URL + "/login",
         {
           emailId,
           password,
         },
-        { withCredentials: true },
-      )
-      dispatch(addUser(response.data))
-      navigate("/")
+        { withCredentials: true }
+      );
+      dispatch(addUser(response.data));
+      navigate("/");
     } catch (err) {
-      setError(err?.response?.data || "Invalid email or password")
+      setError(err?.response?.data || "Invalid email or password");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const validateEmail = (email) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-  }
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
 
   return (
     <div className="h-screen flex flex-col -my-8 justify-center items-center  bg-gradient-to-b from-white to-gray-100 dark:from-gray-900 dark:to-gray-800 transition-colors duration-200">
@@ -99,9 +113,15 @@ const Login = () => {
         <button
           onClick={toggleTheme}
           className="p-2 rounded-full bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 shadow-md transition-colors duration-200"
-          aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          aria-label={
+            theme === "dark" ? "Switch to light mode" : "Switch to dark mode"
+          }
         >
-          {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          {theme === "dark" ? (
+            <Sun className="h-5 w-5" />
+          ) : (
+            <Moon className="h-5 w-5" />
+          )}
         </button>
       </div>
 
@@ -125,6 +145,50 @@ const Login = () => {
             </h2>
 
             <div className="space-y-4">
+              {/* SignIn with Google */}
+              <div className="my-4 flex justify-center">
+                <GoogleLogin
+                  onSuccess={async (credentialResponse) => {
+                    setIsLoading(true);
+                    setError("");
+                    try {
+                      // Send Google idToken to backend
+                      const response = await axios.post(
+                        BASE_URL + "/auth/google",
+                        { idToken: credentialResponse.credential },
+                        { withCredentials: true }
+                      );
+
+                      // ✅ Get the user object from the 'data' property of the response
+                      const loggedInUser = response.data.data;
+
+                      if (loggedInUser) {
+                        // ✅ Dispatch the correct user object to Redux
+                        dispatch(addUser(loggedInUser));
+
+                        // ✅ Check the skills from the user object we just received
+                        if (
+                          Array.isArray(loggedInUser.skills) &&
+                          loggedInUser.skills.length === 0
+                        ) {
+                          navigate("/profile"); // New user, go to profile setup
+                        } else {
+                          navigate("/"); // Existing user, go to home
+                        }
+                      } else {
+                        // Handle case where backend response is not as expected
+                        throw new Error("Login failed: Invalid response from server.");
+                      }
+                    } catch (err) {
+                      setError(err?.response?.data || "Google login failed");
+                    } finally {
+                      setIsLoading(false);
+                    }
+                  }}
+                  onError={() => setError("Google login failed")}
+                />
+              </div>
+
               {!isLoginForm && (
                 <>
                   <div className="grid grid-cols-2 gap-4">
@@ -184,7 +248,7 @@ const Login = () => {
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="relative space-y-2">
                 <label
                   htmlFor="password"
                   className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1 transition-colors duration-200"
@@ -192,14 +256,30 @@ const Login = () => {
                   <Lock className="h-4 w-4" />
                   Password
                 </label>
-                <input
-                  id="password"
-                  type="password"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors duration-200"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder={isLoginForm ? "••••••••" : "6+ characters"}
-                />
+
+                <div className="relative">
+                  <input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors duration-200"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder={isLoginForm ? "••••••••" : "6+ characters"}
+                  />
+
+                  {/* Toggle Eye Icon */}
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-3 flex items-center text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
               </div>
 
               {error && (
@@ -231,8 +311,8 @@ const Login = () => {
               <button
                 className="ml-1 font-medium text-purple-600 dark:text-purple-400 hover:text-purple-500 dark:hover:text-purple-300 focus:outline-none transition-colors duration-200"
                 onClick={() => {
-                  setIsLoginForm(!isLoginForm)
-                  setError("")
+                  setIsLoginForm(!isLoginForm);
+                  setError("");
                 }}
               >
                 {isLoginForm ? "Create an account" : "Sign in"}
@@ -242,8 +322,7 @@ const Login = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Login
-
+export default Login;
