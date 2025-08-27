@@ -43,7 +43,8 @@
 export const BASE_URL = (() => {
   const hostname = window.location.hostname;
   const RENDER_API = 'https://devconnect-ttjp.onrender.com/api';
-  const AZURE_API = 'http://20.244.50.103/api';
+  // const AZURE_API = 'http://20.244.50.103/api';
+  const AZURE_API = 'http://20.244.45.66/api';
   const DEVCONNECTS_API = 'https://devconnects.tech/api';
 
   // Development or Production check
