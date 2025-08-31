@@ -196,15 +196,18 @@ const Chat = () => {
       setCallRejectedPopUp(false);
       setCallAccepted(true);
       setCallerDetails(data.from);
-      if (connectionRef.current) {
+      if (connectionRef.current && connectionRef.current.signalingState !== "stable") {
         connectionRef.current.signal(data.signalData);
+      }else {
+          console.warn("Skipping setRemoteDescription: signalingState is 'stable'.");
       }
     };
 
     // Listener for when the other user rejects the call
     const handleCallRejected = ({ name, profilepic }) => {
       // You might want to clean up the stream here as well
-      setStream(null);
+      streamRef.current = null;
+      setHasStream(false);
       setCallRejectedPopUp(true);
       setCallRejectedUser({ name, profilepic });
     };
