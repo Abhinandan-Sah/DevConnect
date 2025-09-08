@@ -75,11 +75,18 @@ The server will run on [http://localhost:5000](http://localhost:5000) by default
 Create a `.env` file in the `server` directory with the following variables:
 
 ```env
-MONGO_URI=your_mongodb_connection_string
-JWT_SECRET=your_jwt_secret
-SERVER_PORT=5000
-REDIS_URL=redis://localhost:6379
-SERVER_ENV=development
+DB_URL="mongodb+srv://username:password@cluster0.mongodb.net/myDatabase"  
+JWT_SECRET_KEY="MY_SUPER_SECRET_KEY"  
+SERVER_PORT=5000  
+AWS_ACCESS_KEY="AKIAIOSFODNN7EXAMPLE"  
+AWS_SECRET_KEY="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"  
+REDIS_PASSWORD="myRedisStrongPassword123"  
+Cloudinary_API_KEY="123456789012345"  
+Cloudinary_API_SECRET="aBcDeFgHiJkLmNoPqRsTuVwXyZ123456"  
+Cloudinary_CLOUD_NAME="mycloudname"  
+GOOGLE_CLIENT_ID="1234567890-abcdefg.apps.googleusercontent.com"  
+GOOGLE_CLIENT_SECRET="GOCSPX-abc12345xyz67890SecretKey"  
+SERVER_ENV="development" for development/localhost and "Production" for deployment 
 ```
 
 ---
