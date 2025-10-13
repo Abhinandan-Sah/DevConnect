@@ -2,6 +2,7 @@ import { FaPhoneAlt, FaPhoneSlash, FaMicrophoneSlash, FaVideoSlash, FaMicrophone
 import { useState, useEffect, useRef, use } from "react";
 import Peer from "simple-peer";
 import { useSelector } from "react-redux";
+import { getIceServers } from "../utils/constants";
 
 const IncomingCallNotification = ({
   callerDetails,
@@ -83,6 +84,7 @@ const IncomingCallNotification = ({
         initiator: false, // This user isn't the call initiator
         trickle: false, // Preventing trickle of ICE candidates, ensuring a single signal exchange
         stream: currStream,
+        config: {iceServers: await getIceServers()},
       });
 
       peer.on("signal", (data) => {
@@ -181,7 +183,7 @@ const endCallCleanup = () => {
 
     if (callAccepted) {
     return (
-      <div className="absolute inset-0 bg-black z-100 flex flex-col justify-between text-white">
+      <div className="fixed inset-0 bg-black z-50 flex flex-col justify-between text-white">
         
         {/* Background: Shows blurred user photo before call is accepted (though it's accepted here, this structure is for consistency) */}
         {/* This part is less relevant here since we jump straight to accepted, but good for structure */}
@@ -190,7 +192,7 @@ const endCallCleanup = () => {
             <img
               src={callerDetails?.profilepic || "/default-avatar.png"}
               alt="User background"
-              className="absolute inset-0 w-full h-full object-contain blur-md z-0"
+              className="absolute inset-0 w-full h-full object-cover blur-3xl z-0 opacity-40"
               referrerPolicy="no-referrer"
             />
             <div className="absolute inset-0 bg-black/50 z-0"></div>
@@ -206,15 +208,15 @@ const endCallCleanup = () => {
           />
 
         {/* UI Overlays for better text visibility */}
-        <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/60 to-transparent z-10"></div>
-        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
+        <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/60 to-transparent z-10 pointer-events-none"></div>
+        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/60 to-transparent z-10 pointer-events-none"></div>
 
         {/* Header with Target User Info */}
-        <div className="relative z-20 p-4 flex items-center space-x-3">
+        <div className="relative z-20 p-6 flex items-center space-x-3">
           <img
             src={callerDetails?.profilepic || "/default-avatar.png"}
             alt="Target User"
-            className="w-10 h-10 rounded-full border-2 border-white"
+            className="w-12 h-12 rounded-full border-2 border-white"
             referrerPolicy="no-referrer"
           />
           <div>
@@ -227,7 +229,7 @@ const endCallCleanup = () => {
 
         {/* Local Video (PiP) - always shows when your stream is active */}
         {hasStream && (
-          <div className="absolute top-5 right-5 w-28 h-40 md:w-32 md:h-48 bg-gray-800 rounded-xl overflow-hidden shadow-lg border-2 border-gray-600 z-20">
+          <div className="fixed top-5 right-5 w-28 h-40 md:w-32 md:h-48 bg-gray-800 rounded-xl overflow-hidden shadow-lg border-2 border-gray-600 z-20">
             <video
               ref={myVideo}
               autoPlay

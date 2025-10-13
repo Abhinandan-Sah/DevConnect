@@ -19,6 +19,7 @@ import {
 } from "react-icons/fa";
 import Peer from "simple-peer";
 import SocketContext from "../utils/SocketContext";
+import { getIceServers } from "../utils/constants"; 
 
 
 const Chat = () => {
@@ -206,8 +207,21 @@ const Chat = () => {
     // Listener for when the other user rejects the call
     const handleCallRejected = ({ name, profilepic }) => {
       // You might want to clean up the stream here as well
+
+       // Stop all media tracks (camera + mic)
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+      }
+      
+      // Destroy peer connection if it exists
+      if (connectionRef.current) {
+        connectionRef.current.destroy();
+      }
+
       streamRef.current = null;
+      connectionRef.current = null;
       setHasStream(false);
+
       setCallRejectedPopUp(true);
       setCallRejectedUser({ name, profilepic });
     };
@@ -296,6 +310,7 @@ const Chat = () => {
           initiator: true,
           trickle: false,
           stream: currStream,
+          config: {iceServers: await getIceServers()},
         });
 
         // ✅ Handle the "signal" event (this occurs when the WebRTC handshake is initiated)
@@ -510,7 +525,7 @@ const endCallCleanup = () => {
 
       {/* --- ADD THE NEW VIDEO CALL OVERLAY HERE --- */}
       {hasStream && (
-        <div className="absolute inset-0 bg-black z-100 flex flex-col justify-between text-white">
+        <div className="fixed inset-0 bg-black z-50 flex flex-col justify-between text-white">
           {/* Background: Shows blurred user photo before call is accepted */}
           {!callAccepted && (
             <>

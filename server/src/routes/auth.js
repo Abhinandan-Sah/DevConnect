@@ -17,6 +17,30 @@ authRouter.get("/config/google-client-id", (req, res) => {
   res.json({ clientId: process.env.GOOGLE_CLIENT_ID });
 });
 
+authRouter.get("/config/ice-servers", (req, res) => {
+  try {
+    const iceServers = [
+      {
+        urls: [
+          "stun:stun.cloudflare.com:3478",
+          "turn:turn.cloudflare.com:3478?transport=udp",
+          "turn:turn.cloudflare.com:3478?transport=tcp",
+          "turns:turn.cloudflare.com:5349?transport=tcp",
+        ],
+        username: process.env.CLOUDFLARE_TURN_TOKEN_ID,
+        credential: process.env.CLOUDFLARE_TURN_API_TOKEN,
+      },
+    ];
+    res.json({ iceServers });
+  } catch (err) {
+    res
+      .status(500)
+      .json({
+        message: "failed to fetch ice server configuration" + err.message,
+      });
+  }
+});
+
 authRouter.post("/auth/google", async (req, res) => {
   try {
     const { idToken } = req.body;

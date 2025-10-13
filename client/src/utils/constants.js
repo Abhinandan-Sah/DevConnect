@@ -102,3 +102,15 @@ export function jaccardSimilarity(arrA, arrB) {
   const union = new Set([...setA, ...setB]);
   return intersection.size / union.size;
 }
+
+export const getIceServers = async () => {
+  try{
+    const response = await fetch(`${BASE_URL}/config/ice-servers`);
+    const data = await response.json();
+    return data.iceServers;
+  }catch(err){
+    console.error("Failed to fetch ICE servers:", err);
+    // Fallback to basic STUN server if fetch fails
+    return [{urls: ["stun:stun.l.google.com:19302"]}];
+  }
+};
