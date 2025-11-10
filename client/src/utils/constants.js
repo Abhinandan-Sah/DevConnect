@@ -43,9 +43,10 @@
 export const BASE_URL = (() => {
   const hostname = window.location.hostname;
   const RENDER_API = 'https://devconnect-ttjp.onrender.com/api';
-  // const AZURE_API = 'http://20.244.50.103/api';
-  const AZURE_API = 'http://20.244.45.66/api';
+  const AZURE_API = 'http://20.244.50.103/api';
+  // const AZURE_API = 'http://20.244.45.66/api';
   const DEVCONNECTS_API = 'https://devconnects.tech/api';
+  const NEW_AWS_API = 'http://13.232.113.42/api';
 
   // Development or Production check
   if (hostname === 'localhost') {
@@ -64,8 +65,13 @@ export const BASE_URL = (() => {
     return RENDER_API;
   }
 
-  // For new API IP
-  if (hostname === '20.244.50.103') {
+  // For new AWS EC2 IP
+  if (hostname === '13.232.113.42') {
+    return NEW_AWS_API;
+  }
+
+  // For old Azure IP
+  if (hostname === '20.244.50.103' || hostname === '20.244.45.66') {
     return AZURE_API;
   }
 
