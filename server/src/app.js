@@ -23,19 +23,28 @@ const rateLimiter = require("./middlewares/rateLimiter.js");
 
 const port = process.env.SERVER_PORT;
 
+// app.use(cors({
+//     origin: process.env.SERVER_ENV === 'production'
+//       ? [
+//           'http://devconnects.tech',
+//           'https://devconnects.tech',
+//           'http://www.devconnects.tech',
+//           'https://www.devconnects.tech',
+//           'http://20.244.50.103:5173',
+//           'http://20.244.50.103',
+//           'http://20.244.45.66:5173',
+//           'http://20.244.45.66',
+//         ]
+//       : 'http://localhost:5173',
+//     credentials: true,
+//     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+//     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+//     exposedHeaders: ['Set-Cookie']
+// }));
+
+// Allow all origins
 app.use(cors({
-    origin: process.env.SERVER_ENV === 'production'
-      ? [
-          'http://devconnects.tech',
-          'https://devconnects.tech',
-          'http://www.devconnects.tech',
-          'https://www.devconnects.tech',
-          'http://20.244.50.103:5173',
-          'http://20.244.50.103',
-          'http://20.244.45.66:5173',
-          'http://20.244.45.66',
-        ]
-      : 'http://localhost:5173',
+    origin: '*',
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
