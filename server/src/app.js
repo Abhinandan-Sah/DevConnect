@@ -73,6 +73,36 @@ app.get("/", async (req, res) => {
   res.send("hello from server");
 });
 
+// Health check endpoints for Nagios monitoring
+app.get("/api/health", async (req, res) => {
+  res.status(200).json({ status: "ok", message: "API is running" });
+});
+
+app.get("/api/health/mongodb", async (req, res) => {
+  try {
+    const mongoose = require("mongoose");
+    if (mongoose.connection.readyState === 1) {
+      res.status(200).json({ status: "ok", message: "MongoDB is connected" });
+    } else {
+      res.status(503).json({ status: "error", message: "MongoDB is not connected" });
+    }
+  } catch (error) {
+    res.status(503).json({ status: "error", message: "MongoDB health check failed", error: error.message });
+  }
+});
+
+app.get("/api/health/redis", async (req, res) => {
+  try {
+    if (redisClient.isOpen && redisClient.isReady) {
+      await redisClient.ping();
+      res.status(200).json({ status: "ok", message: "Redis is connected" });
+    } else {
+      res.status(503).json({ status: "error", message: "Redis is not connected" });
+    }
+  } catch (error) {
+    res.status(503).json({ status: "error", message: "Redis health check failed", error: error.message });
+  }
+});
 
 const server = http.createServer(app);
 initilizeSocket(server);
